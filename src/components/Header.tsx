@@ -64,6 +64,13 @@ export default async function Header() {
               >
                 Creează cont
               </Link>
+
+              <Link
+                href="/profil"
+                className="text-sm font-medium text-gray-700 transition hover:text-gray-900"
+                >
+                Profil
+              </Link>
             </>
           )}
         </nav>
