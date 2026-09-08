@@ -26,7 +26,7 @@ export async function signUp(formData: FormData) {
     redirect(`/register?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/login?message=Cont creat cu succes.");
+  redirect("/dashboard");
 }
 
 export async function signIn(formData: FormData) {

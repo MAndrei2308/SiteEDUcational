@@ -4,11 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
 
-  if (!user) {
+  if (error || !data?.claims) {
     redirect("/login");
   }
 
@@ -19,7 +17,7 @@ export default async function DashboardPage() {
       </h1>
 
       <p className="mt-4 text-gray-600">
-        Ești autentificat ca {user.email}.
+        Ești autentificat.
       </p>
     </main>
   );
