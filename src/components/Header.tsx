@@ -9,6 +9,18 @@ export default async function Header() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let role: string | null = null;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    role = profile?.role ?? null;
+  }
+
   return (
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -40,6 +52,22 @@ export default async function Header() {
                 Dashboard
               </Link>
 
+              <Link
+                href="/profil"
+                className="text-sm font-medium text-gray-700 transition hover:text-gray-900"
+              >
+                Profil
+              </Link>
+
+              {role === "ADMIN" && (
+                <Link
+                    href="/admin"
+                    className="text-sm font-medium text-gray-700 transition hover:text-gray-900"
+                >
+                    Admin
+                </Link>
+              )}
+
               <form action={signOut}>
                 <button
                   type="submit"
@@ -63,13 +91,6 @@ export default async function Header() {
                 className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
               >
                 Creează cont
-              </Link>
-
-              <Link
-                href="/profil"
-                className="text-sm font-medium text-gray-700 transition hover:text-gray-900"
-                >
-                Profil
               </Link>
             </>
           )}
