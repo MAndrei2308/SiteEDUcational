@@ -1,8 +1,11 @@
 export default function SubjectsPage() {
   return (
-    <main>
-      <h1>Materii</h1>
-      <p>Aici vor fi afișate materiile disponibile.</p>
+    <main className="mx-auto max-w-6xl px-6 py-16">
+      <h1 className="text-3xl font-bold text-gray-900">Materii</h1>
+
+      <p className="mt-4 text-gray-600">
+        Aici vor fi afișate materiile disponibile.
+      </p>
     </main>
   );
 }
