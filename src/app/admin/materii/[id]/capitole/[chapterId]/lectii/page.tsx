@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { deleteChapter } from "./actions";
+import { deleteLesson } from "./actions";
 
-type ChaptersPageProps = {
+type LessonsPageProps = {
   params: Promise<{
     id: string;
+    chapterId: string;
   }>;
 };
 
-export default async function ChaptersPage({
+export default async function LessonsPage({
   params,
-}: ChaptersPageProps) {
-  const { id } = await params;
+}: LessonsPageProps) {
+  const { id, chapterId } = await params;
 
   const supabase = await createClient();
 
@@ -35,71 +36,80 @@ export default async function ChaptersPage({
     redirect("/dashboard");
   }
 
-  const { data: subject, error: subjectError } = await supabase
-    .from("subjects")
-    .select("id, name")
-    .eq("id", id)
+  const { data: chapter, error: chapterError } = await supabase
+    .from("chapters")
+    .select(`
+      id,
+      title,
+      subject_id,
+      subjects (
+        id,
+        name
+      )
+    `)
+    .eq("id", chapterId)
+    .eq("subject_id", id)
     .single();
 
-  if (subjectError || !subject) {
+  if (chapterError || !chapter) {
     notFound();
   }
 
-  const { data: chapters, error } = await supabase
-    .from("chapters")
+  const { data: lessons, error } = await supabase
+    .from("lessons")
     .select("id, title, slug, display_order, is_active")
-    .eq("subject_id", id)
+    .eq("chapter_id", chapterId)
     .order("display_order", { ascending: true });
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
       <Link
-        href="/admin/materii"
+        href={`/admin/materii/${id}/capitole`}
         className="text-sm font-medium text-gray-600 hover:text-gray-900"
       >
-        ← Înapoi la materii
+        ← Înapoi la capitole
       </Link>
 
       <div className="mt-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Capitole — {subject.name}
+            Lecții — {chapter.title}
           </h1>
 
           <p className="mt-2 text-gray-600">
-            Gestionează capitolele acestei materii.
+            Gestionează lecțiile acestui capitol.
           </p>
         </div>
 
         <Link
-          href={`/admin/materii/${subject.id}/capitole/nou`}
+          href={`/admin/materii/${id}/capitole/${chapterId}/lectii/noua`}
           className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
         >
-          Adaugă capitol
+          Adaugă lecție
         </Link>
       </div>
 
       {error && (
         <p className="mt-8 text-red-600">
-          Capitolele nu au putut fi încărcate.
+          Lecțiile nu au putut fi încărcate.
         </p>
       )}
 
-      {!error && chapters?.length === 0 && (
+      {!error && lessons?.length === 0 && (
         <div className="mt-8 rounded-xl border border-gray-200 p-6">
           <p className="text-gray-600">
-            Nu există încă niciun capitol.
+            Nu există încă nicio lecție.
           </p>
         </div>
       )}
 
-      {!error && chapters && chapters.length > 0 && (
+      {!error && lessons && lessons.length > 0 && (
         <div className="mt-8 overflow-hidden rounded-xl border border-gray-200">
           <table className="w-full text-left">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
-                  Capitol
+                  Lecție
                 </th>
 
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
@@ -121,41 +131,41 @@ export default async function ChaptersPage({
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {chapters.map((chapter) => (
-                <tr key={chapter.id}>
+              {lessons.map((lesson) => (
+                <tr key={lesson.id}>
                   <td className="px-4 py-3 text-gray-900">
-                    {chapter.title}
+                    {lesson.title}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
-                    {chapter.slug}
+                    {lesson.slug}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
-                    {chapter.is_active ? "Activ" : "Inactiv"}
+                    {lesson.is_active ? "Activă" : "Inactivă"}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
-                    {chapter.display_order}
+                    {lesson.display_order}
                   </td>
 
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-4">
                         <Link
-                          href={`/admin/materii/${subject.id}/capitole/${chapter.id}/edit`}
-                          className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                          >
-                          Editează
+                        href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lesson.id}/edit`}
+                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                        >
+                        Editează
                         </Link>
 
-                        <Link
-                          href={`/admin/materii/${subject.id}/capitole/${chapter.id}/lectii`}
-                          className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                          >
-                          Lecții
-                        </Link>
-
-                        <form action={deleteChapter.bind(null, subject.id, chapter.id)}>
+                        <form
+                        action={deleteLesson.bind(
+                            null,
+                            id,
+                            chapterId,
+                            lesson.id
+                        )}
+                        >
                         <button
                             type="submit"
                             className="text-sm font-medium text-red-600 hover:text-red-700"
