@@ -1,10 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import DeleteSubjectButton from "@/components/admin/DeleteSubjectButton";
-import { deleteSubject } from "./actions";
+import { deleteChapter } from "./actions";
 
-export default async function AdminSubjectsPage() {
+type ChaptersPageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default async function ChaptersPage({
+  params,
+}: ChaptersPageProps) {
+  const { id } = await params;
+
   const supabase = await createClient();
 
   const { data: claimsData, error: claimsError } =
@@ -26,63 +35,85 @@ export default async function AdminSubjectsPage() {
     redirect("/dashboard");
   }
 
-  const { data: subjects, error } = await supabase
+  const { data: subject, error: subjectError } = await supabase
     .from("subjects")
-    .select("id, name, slug, is_active, display_order")
+    .select("id, name")
+    .eq("id", id)
+    .single();
+
+  if (subjectError || !subject) {
+    notFound();
+  }
+
+  const { data: chapters, error } = await supabase
+    .from("chapters")
+    .select("id, title, slug, display_order, is_active")
+    .eq("subject_id", id)
     .order("display_order", { ascending: true });
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
-      <div className="flex items-center justify-between">
+      <Link
+        href="/admin/materii"
+        className="text-sm font-medium text-gray-600 hover:text-gray-900"
+      >
+        ← Înapoi la materii
+      </Link>
+
+      <div className="mt-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Administrare materii
+            Capitole — {subject.name}
           </h1>
 
           <p className="mt-2 text-gray-600">
-            Gestionează materiile disponibile în platformă.
+            Gestionează capitolele acestei materii.
           </p>
         </div>
 
         <Link
-          href="/admin/materii/noua"
+          href={`/admin/materii/${subject.id}/capitole/nou`}
           className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
         >
-          Adaugă materie
+          Adaugă capitol
         </Link>
       </div>
 
       {error && (
         <p className="mt-8 text-red-600">
-          Materiile nu au putut fi încărcate.
+          Capitolele nu au putut fi încărcate.
         </p>
       )}
 
-      {!error && subjects?.length === 0 && (
+      {!error && chapters?.length === 0 && (
         <div className="mt-8 rounded-xl border border-gray-200 p-6">
           <p className="text-gray-600">
-            Nu există încă nicio materie.
+            Nu există încă niciun capitol.
           </p>
         </div>
       )}
 
-      {!error && subjects && subjects.length > 0 && (
+      {!error && chapters && chapters.length > 0 && (
         <div className="mt-8 overflow-hidden rounded-xl border border-gray-200">
           <table className="w-full text-left">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
-                  Materie
+                  Capitol
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Slug
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Status
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Ordine
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Acțiuni
                 </th>
@@ -90,54 +121,43 @@ export default async function AdminSubjectsPage() {
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {subjects.map((subject) => (
-                <tr key={subject.id}>
+              {chapters.map((chapter) => (
+                <tr key={chapter.id}>
                   <td className="px-4 py-3 text-gray-900">
-                    {subject.name}
+                    {chapter.title}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
-                    {subject.slug}
-                  </td>
-
-                  <td className="px-4 py-3">
-                    {subject.is_active ? "Activă" : "Inactivă"}
+                    {chapter.slug}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
-                    {subject.display_order}
+                    {chapter.is_active ? "Activ" : "Inactiv"}
+                  </td>
+
+                  <td className="px-4 py-3 text-gray-600">
+                    {chapter.display_order}
                   </td>
 
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-4">
-                      <Link
-                        href={`/admin/materii/${subject.id}/edit`}
+                        <Link
+                        href={`/admin/materii/${subject.id}/capitole/${chapter.id}/edit`}
                         className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                      >
+                        >
                         Editează
-                      </Link>
+                        </Link>
 
-                      <Link
-                        href={`/admin/materii/${subject.id}/utilizatori`}
-                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                      >
-                        Utilizatori
-                      </Link>
-
-                      <Link
-                        href={`/admin/materii/${subject.id}/capitole`}
-                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                      >
-                        Capitole
-                      </Link>
-
-                      <DeleteSubjectButton
-                        subjectId={subject.id}
-                        subjectName={subject.name}
-                        deleteAction={deleteSubject}
-                      />
+                        <form action={deleteChapter.bind(null, subject.id, chapter.id)}>
+                        <button
+                            type="submit"
+                            className="text-sm font-medium text-red-600 hover:text-red-700"
+                        >
+                            Șterge
+                        </button>
+                        </form>
                     </div>
-                  </td>
+                    </td>
                 </tr>
               ))}
             </tbody>
