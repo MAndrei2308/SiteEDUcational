@@ -44,6 +44,13 @@ export default async function AdminPage() {
       >
         Gestionează materiile
       </Link>
+
+      <Link
+        href="/admin/cereri"
+        className="ml-4 mt-8 inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900"
+      >
+        Gestionează cererile
+      </Link>
     </main>
   );
 }
