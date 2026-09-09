@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import DeleteSubjectButton from "@/components/admin/DeleteSubjectButton";
+import { deleteSubject } from "./actions";
 
 export default async function AdminSubjectsPage() {
   const supabase = await createClient();
@@ -81,6 +83,9 @@ export default async function AdminSubjectsPage() {
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Ordine
                 </th>
+                <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  Acțiuni
+                </th>
               </tr>
             </thead>
 
@@ -101,6 +106,30 @@ export default async function AdminSubjectsPage() {
 
                   <td className="px-4 py-3 text-gray-600">
                     {subject.display_order}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-4">
+                      <Link
+                        href={`/admin/materii/${subject.id}/edit`}
+                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                      >
+                        Editează
+                      </Link>
+
+                      <Link
+                        href={`/admin/materii/${subject.id}/utilizatori`}
+                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                      >
+                        Utilizatori
+                      </Link>
+
+                      <DeleteSubjectButton
+                        subjectId={subject.id}
+                        subjectName={subject.name}
+                        deleteAction={deleteSubject}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

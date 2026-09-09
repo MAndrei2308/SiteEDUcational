@@ -41,3 +41,77 @@ export async function createSubject(formData: FormData) {
 
   redirect("/admin/materii");
 }
+
+export async function updateSubject(
+  subjectId: string,
+  formData: FormData
+) {
+  const supabase = await createClient();
+
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+
+  if (claimsError || !claimsData?.claims?.sub) {
+    redirect("/login");
+  }
+
+  const name = String(formData.get("name") ?? "").trim();
+  const slug = String(formData.get("slug") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const displayOrder = Number(formData.get("displayOrder") ?? 0);
+  const isActive = formData.get("isActive") === "on";
+
+  if (!name || !slug) {
+    redirect(
+      `/admin/materii/${subjectId}/edit?error=${encodeURIComponent(
+        "Numele și slug-ul sunt obligatorii."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("subjects")
+    .update({
+      name,
+      slug,
+      description: description || null,
+      display_order: displayOrder,
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", subjectId);
+
+  if (error) {
+    redirect(
+      `/admin/materii/${subjectId}/edit?error=${encodeURIComponent(
+        error.message
+      )}`
+    );
+  }
+
+  redirect("/admin/materii");
+}
+
+export async function deleteSubject(subjectId: string) {
+  const supabase = await createClient();
+
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+
+  if (claimsError || !claimsData?.claims?.sub) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("subjects")
+    .delete()
+    .eq("id", subjectId);
+
+  if (error) {
+    redirect(
+      `/admin/materii?error=${encodeURIComponent(error.message)}`
+    );
+  }
+
+  redirect("/admin/materii");
+}
