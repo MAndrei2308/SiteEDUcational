@@ -32,6 +32,24 @@ export default async function SubjectPage({
 
   let userRole: string | null = null;
   let enrollmentStatus: string | null = null;
+  let hasAccess = false;
+
+  let chapters:
+    | {
+        id: string;
+        title: string;
+        slug: string;
+        description: string | null;
+        display_order: number;
+        lessons: {
+          id: string;
+          title: string;
+          slug: string;
+          summary: string | null;
+          display_order: number;
+        }[];
+      }[]
+    | null = null;
 
   if (user) {
     const { data: profile } = await supabase
@@ -52,6 +70,34 @@ export default async function SubjectPage({
 
       enrollmentStatus = enrollment?.status ?? null;
     }
+
+    hasAccess =
+      userRole === "ADMIN" ||
+      enrollmentStatus === "APPROVED";
+
+    if (hasAccess) {
+      const { data } = await supabase
+        .from("chapters")
+        .select(`
+          id,
+          title,
+          slug,
+          description,
+          display_order,
+          lessons (
+            id,
+            title,
+            slug,
+            summary,
+            display_order
+          )
+        `)
+        .eq("subject_id", subject.id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      chapters = data;
+    }
   }
 
   return (
@@ -67,7 +113,6 @@ export default async function SubjectPage({
       )}
 
       <div className="mt-10 rounded-xl border border-gray-200 p-6">
-
         {!user && (
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -162,15 +207,74 @@ export default async function SubjectPage({
               <p className="mt-2 text-gray-600">
                 Ai acces la conținutul acestei materii.
               </p>
-
-              <div className="mt-6 rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-600">
-                  Capitolele și lecțiile vor fi afișate aici.
-                </p>
-              </div>
             </div>
           )}
       </div>
+
+      {hasAccess && (
+        <section className="mt-10">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Conținutul materiei
+          </h2>
+
+          {!chapters || chapters.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-gray-200 p-6">
+              <p className="text-gray-600">
+                Nu există încă niciun capitol disponibil.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-6">
+              {chapters.map((chapter) => (
+                <div
+                  key={chapter.id}
+                  className="rounded-xl border border-gray-200 p-6"
+                >
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {chapter.title}
+                  </h3>
+
+                  {chapter.description && (
+                    <p className="mt-2 text-gray-600">
+                      {chapter.description}
+                    </p>
+                  )}
+
+                  {chapter.lessons?.length > 0 ? (
+                    <div className="mt-5 space-y-3">
+                      {chapter.lessons
+                        .sort(
+                          (a, b) =>
+                            a.display_order - b.display_order
+                        )
+                        .map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className="rounded-lg bg-gray-50 px-4 py-3"
+                          >
+                            <p className="font-medium text-gray-900">
+                              {lesson.title}
+                            </p>
+
+                            {lesson.summary && (
+                              <p className="mt-1 text-sm text-gray-600">
+                                {lesson.summary}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-gray-500">
+                      Nu există încă lecții disponibile.
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }
