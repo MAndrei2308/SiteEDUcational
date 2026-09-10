@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateLesson } from "../../actions";
+import { deleteLessonBlock } from "../blocuri/actions";
 import LessonBlockRenderer from "@/components/lesson/LessonBlockRenderer";
+import { moveLessonBlockUp } from "../blocuri/actions";
+import { moveLessonBlockDown } from "../blocuri/actions";
 
 type EditLessonPageProps = {
   params: Promise<{
@@ -156,10 +159,14 @@ export default async function EditLessonPage({
             id="displayOrder"
             name="displayOrder"
             type="number"
-            min="0"
+            min="1"
             defaultValue={lesson.display_order}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
+
+          <p className="mt-1 text-xs text-gray-500">
+            Dacă poziția este deja ocupată, celelalte lecții vor fi reordonate automat.
+          </p>
         </div>
 
         <label className="flex items-center gap-3">
@@ -225,6 +232,7 @@ export default async function EditLessonPage({
                 className="rounded-xl border border-gray-200 p-5"
               >
                 <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                     {block.type}
                   </span>
@@ -234,6 +242,66 @@ export default async function EditLessonPage({
                   </span>
                 </div>
 
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${block.id}/edit`}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Editează
+                  </Link>
+
+                  <form
+                    action={deleteLessonBlock.bind(
+                      null,
+                      id,
+                      chapterId,
+                      lessonId,
+                      block.id
+                    )}
+                  >
+                    <button
+                      type="submit"
+                      className="text-sm font-medium text-red-600 hover:text-red-700"
+                    >
+                      Șterge
+                    </button>
+                  </form>
+
+                  <form
+                    action={moveLessonBlockUp.bind(
+                      null,
+                      id,
+                      chapterId,
+                      lessonId,
+                      block.id
+                    )}
+                  >
+                    <button
+                      type="submit"
+                      className="text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      ↑ Sus
+                    </button>
+                  </form>
+
+                  <form
+                    action={moveLessonBlockDown.bind(
+                      null,
+                      id,
+                      chapterId,
+                      lessonId,
+                      block.id
+                    )}
+                  >
+                    <button
+                      type="submit"
+                      className="text-sm text-gray-600 hover:text-gray-900"
+                    >
+                      ↓ Jos
+                    </button>
+                  </form>
+                </div>
+              </div>
                 <div className="mt-4">
                   <LessonBlockRenderer block={block} />
                 </div>

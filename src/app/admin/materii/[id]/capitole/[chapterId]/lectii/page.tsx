@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deleteLesson } from "./actions";
+import { moveLessonUp } from "./actions";
+import { moveLessonDown } from "./actions";
 
 type LessonsPageProps = {
   params: Promise<{
@@ -172,6 +174,38 @@ export default async function LessonsPage({
                         >
                             Șterge
                         </button>
+                        </form>
+
+                        <form
+                          action={moveLessonUp.bind(
+                            null,
+                            id,
+                            chapterId,
+                            lesson.id
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            ↑ Sus
+                          </button>
+                        </form>
+
+                        <form
+                          action={moveLessonDown.bind(
+                            null,
+                            id,
+                            chapterId,
+                            lesson.id
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            ↓ Jos
+                          </button>
                         </form>
                     </div>
                     </td>

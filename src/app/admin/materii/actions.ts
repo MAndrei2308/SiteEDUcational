@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { moveItem } from "@/lib/reorder";
+import { setItemPosition } from "@/lib/reorder";
 
 export async function createSubject(formData: FormData) {
   const supabase = await createClient();
@@ -16,26 +18,41 @@ export async function createSubject(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const displayOrder = Number(formData.get("displayOrder") ?? 0);
   const isActive = formData.get("isActive") === "on";
 
   if (!name || !slug) {
     redirect(
-      "/admin/materii/noua?error=Numele și slug-ul sunt obligatorii."
+      `/admin/materii/noua?error=${encodeURIComponent(
+        "Numele și slug-ul sunt obligatorii."
+      )}`
     );
   }
 
-  const { error } = await supabase.from("subjects").insert({
-    name,
-    slug,
-    description: description || null,
-    display_order: displayOrder,
-    is_active: isActive,
-  });
+  const { data: lastSubject } = await supabase
+    .from("subjects")
+    .select("display_order")
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const displayOrder =
+    (lastSubject?.display_order ?? 0) + 1;
+
+  const { error } = await supabase
+    .from("subjects")
+    .insert({
+      name,
+      slug,
+      description: description || null,
+      display_order: displayOrder,
+      is_active: isActive,
+    });
 
   if (error) {
     redirect(
-      `/admin/materii/noua?error=${encodeURIComponent(error.message)}`
+      `/admin/materii/noua?error=${encodeURIComponent(
+        error.message
+      )}`
     );
   }
 
@@ -57,9 +74,16 @@ export async function updateSubject(
 
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const displayOrder = Number(formData.get("displayOrder") ?? 0);
-  const isActive = formData.get("isActive") === "on";
+  const description = String(
+    formData.get("description") ?? ""
+  ).trim();
+
+  const displayOrder = Number(
+    formData.get("displayOrder") ?? 1
+  );
+
+  const isActive =
+    formData.get("isActive") === "on";
 
   if (!name || !slug) {
     redirect(
@@ -75,7 +99,6 @@ export async function updateSubject(
       name,
       slug,
       description: description || null,
-      display_order: displayOrder,
       is_active: isActive,
       updated_at: new Date().toISOString(),
     })
@@ -88,6 +111,13 @@ export async function updateSubject(
       )}`
     );
   }
+
+  await setItemPosition(
+    supabase,
+    "subjects",
+    subjectId,
+    displayOrder
+  );
 
   redirect("/admin/materii");
 }
@@ -112,6 +142,32 @@ export async function deleteSubject(subjectId: string) {
       `/admin/materii?error=${encodeURIComponent(error.message)}`
     );
   }
+
+  redirect("/admin/materii");
+}
+
+export async function moveSubjectUp(subjectId: string) {
+  const supabase = await createClient();
+
+  await moveItem(
+    supabase,
+    "subjects",
+    subjectId,
+    "up"
+  );
+
+  redirect("/admin/materii");
+}
+
+export async function moveSubjectDown(subjectId: string) {
+  const supabase = await createClient();
+
+  await moveItem(
+    supabase,
+    "subjects",
+    subjectId,
+    "down"
+  );
 
   redirect("/admin/materii");
 }

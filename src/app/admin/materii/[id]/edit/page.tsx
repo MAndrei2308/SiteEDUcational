@@ -140,10 +140,14 @@ export default async function EditSubjectPage({
             id="displayOrder"
             name="displayOrder"
             type="number"
-            min="0"
+            min="1"
             defaultValue={subject.display_order}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
+
+          <p className="mt-1 text-xs text-gray-500">
+            Dacă poziția este ocupată, celelalte materii vor fi reordonate automat.
+          </p>
         </div>
 
         <label className="flex items-center gap-3">

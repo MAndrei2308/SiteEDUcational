@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DeleteSubjectButton from "@/components/admin/DeleteSubjectButton";
 import { deleteSubject } from "./actions";
+import { moveSubjectUp } from "./actions";
+import { moveSubjectDown } from "./actions";
 
 export default async function AdminSubjectsPage() {
   const supabase = await createClient();
@@ -136,6 +138,24 @@ export default async function AdminSubjectsPage() {
                         subjectName={subject.name}
                         deleteAction={deleteSubject}
                       />
+
+                      <form action={moveSubjectUp.bind(null, subject.id)}>
+                        <button
+                          type="submit"
+                          className="text-sm text-gray-600 hover:text-gray-900"
+                        >
+                          ↑ Sus
+                        </button>
+                      </form>
+
+                      <form action={moveSubjectDown.bind(null, subject.id)}>
+                        <button
+                          type="submit"
+                          className="text-sm text-gray-600 hover:text-gray-900"
+                        >
+                          ↓ Jos
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

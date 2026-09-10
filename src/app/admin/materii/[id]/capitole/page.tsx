@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deleteChapter } from "./actions";
+import { moveChapterUp } from "./actions";
+import { moveChapterDown } from "./actions";
 
 type ChaptersPageProps = {
   params: Promise<{
@@ -162,6 +164,36 @@ export default async function ChaptersPage({
                         >
                             Șterge
                         </button>
+                        </form>
+
+                        <form
+                          action={moveChapterUp.bind(
+                            null,
+                            id,
+                            chapter.id
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            ↑ Sus
+                          </button>
+                        </form>
+
+                        <form
+                          action={moveChapterDown.bind(
+                            null,
+                            id,
+                            chapter.id
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            ↓ Jos
+                          </button>
                         </form>
                     </div>
                     </td>

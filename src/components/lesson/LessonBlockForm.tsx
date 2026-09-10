@@ -4,12 +4,22 @@ import { useState } from "react";
 
 type LessonBlockFormProps = {
   action: (formData: FormData) => void | Promise<void>;
+  initialType?: string;
+  initialContent?: Record<string, unknown>;
+  initialDisplayOrder?: number;
+  initialIsActive?: boolean;
+  submitLabel?: string;
 };
 
 export default function LessonBlockForm({
   action,
+  initialType = "TEXT",
+  initialContent = {},
+  initialDisplayOrder = 1,
+  initialIsActive = true,
+  submitLabel = "Salvează blocul",
 }: LessonBlockFormProps) {
-  const [type, setType] = useState("TEXT");
+  const [type, setType] = useState(initialType);
 
   return (
     <form action={action} className="mt-8 space-y-6">
@@ -49,6 +59,7 @@ export default function LessonBlockForm({
               name="headingText"
               type="text"
               required
+              defaultValue={String(initialContent.text ?? "")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>
@@ -64,7 +75,7 @@ export default function LessonBlockForm({
             <select
               id="headingLevel"
               name="headingLevel"
-              defaultValue="2"
+              defaultValue={String(initialContent.level ?? "2")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
             >
               <option value="2">H2</option>
@@ -89,6 +100,7 @@ export default function LessonBlockForm({
             name="text"
             rows={8}
             required
+            defaultValue={String(initialContent.text ?? "")}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </div>
@@ -107,7 +119,7 @@ export default function LessonBlockForm({
             <select
               id="language"
               name="language"
-              defaultValue="cpp"
+              defaultValue={String(initialContent.language ?? "cpp")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
             >
               <option value="cpp">C++</option>
@@ -135,6 +147,7 @@ export default function LessonBlockForm({
               rows={10}
               required
               spellCheck={false}
+              defaultValue={String(initialContent.code ?? "")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono"
             />
           </div>
@@ -153,8 +166,8 @@ export default function LessonBlockForm({
           id="displayOrder"
           name="displayOrder"
           type="number"
-          min="0"
-          defaultValue="0"
+          min="1"
+          defaultValue={initialDisplayOrder}
           className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
         />
       </div>
@@ -163,7 +176,7 @@ export default function LessonBlockForm({
         <input
           name="isActive"
           type="checkbox"
-          defaultChecked
+          defaultChecked={initialIsActive}
           className="h-4 w-4"
         />
 
@@ -176,7 +189,7 @@ export default function LessonBlockForm({
         type="submit"
         className="rounded-lg bg-gray-900 px-4 py-2 font-medium text-white"
       >
-        Salvează blocul
+        {submitLabel}
       </button>
     </form>
   );

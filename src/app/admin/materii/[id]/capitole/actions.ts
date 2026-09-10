@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { moveItem } from "@/lib/reorder";
+import { setItemPosition } from "@/lib/reorder";
 
 export async function createChapter(
   subjectId: string,
@@ -19,7 +21,17 @@ export async function createChapter(
   const title = String(formData.get("title") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const displayOrder = Number(formData.get("displayOrder") ?? 0);
+
+  const { data: lastChapter } = await supabase
+    .from("chapters")
+    .select("display_order")
+    .eq("subject_id", subjectId)
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const displayOrder = (lastChapter?.display_order ?? 0) + 1;
+
   const isActive = formData.get("isActive") === "on";
 
   if (!title || !slug) {
@@ -68,8 +80,14 @@ export async function updateChapter(
 
   const title = String(formData.get("title") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-  const displayOrder = Number(formData.get("displayOrder") ?? 0);
+  const description = String(
+    formData.get("description") ?? ""
+  ).trim();
+
+  const displayOrder = Number(
+    formData.get("displayOrder") ?? 1
+  );
+
   const isActive = formData.get("isActive") === "on";
 
   if (!title || !slug) {
@@ -86,7 +104,6 @@ export async function updateChapter(
       title,
       slug,
       description: description || null,
-      display_order: displayOrder,
       is_active: isActive,
       updated_at: new Date().toISOString(),
     })
@@ -100,6 +117,15 @@ export async function updateChapter(
       )}`
     );
   }
+
+  await setItemPosition(
+    supabase,
+    "chapters",
+    chapterId,
+    displayOrder,
+    "subject_id",
+    subjectId
+  );
 
   redirect(`/admin/materii/${subjectId}/capitole`);
 }
@@ -130,6 +156,42 @@ export async function deleteChapter(
       )}`
     );
   }
+
+  redirect(`/admin/materii/${subjectId}/capitole`);
+}
+
+export async function moveChapterUp(
+  subjectId: string,
+  chapterId: string
+) {
+  const supabase = await createClient();
+
+  await moveItem(
+    supabase,
+    "chapters",
+    chapterId,
+    "up",
+    "subject_id",
+    subjectId
+  );
+
+  redirect(`/admin/materii/${subjectId}/capitole`);
+}
+
+export async function moveChapterDown(
+  subjectId: string,
+  chapterId: string
+) {
+  const supabase = await createClient();
+
+  await moveItem(
+    supabase,
+    "chapters",
+    chapterId,
+    "down",
+    "subject_id",
+    subjectId
+  );
 
   redirect(`/admin/materii/${subjectId}/capitole`);
 }

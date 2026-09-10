@@ -1,25 +1,26 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createLessonBlock } from "../actions";
 import LessonBlockForm from "@/components/lesson/LessonBlockForm";
+import { updateLessonBlock } from "../../actions"
 
-type NewLessonBlockPageProps = {
+type EditLessonBlockPageProps = {
   params: Promise<{
     id: string;
     chapterId: string;
     lessonId: string;
+    blockId: string;
   }>;
   searchParams: Promise<{
     error?: string;
   }>;
 };
 
-export default async function NewLessonBlockPage({
+export default async function EditLessonBlockPage({
   params,
   searchParams,
-}: NewLessonBlockPageProps) {
-  const { id, chapterId, lessonId } = await params;
+}: EditLessonBlockPageProps) {
+  const { id, chapterId, lessonId, blockId } = await params;
   const query = await searchParams;
 
   const supabase = await createClient();
@@ -43,26 +44,16 @@ export default async function NewLessonBlockPage({
     redirect("/dashboard");
   }
 
-  const { data: lesson, error: lessonError } = await supabase
-    .from("lessons")
-    .select("id, title, chapter_id")
-    .eq("id", lessonId)
-    .eq("chapter_id", chapterId)
+  const { data: block, error: blockError } = await supabase
+    .from("lesson_blocks")
+    .select("id, lesson_id, type, content, display_order, is_active")
+    .eq("id", blockId)
+    .eq("lesson_id", lessonId)
     .single();
 
-  if (lessonError || !lesson) {
+  if (blockError || !block) {
     notFound();
   }
-
-  const { data: lastBlock } = await supabase
-    .from("lesson_blocks")
-    .select("display_order")
-    .eq("lesson_id", lessonId)
-    .order("display_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const nextPosition = (lastBlock?.display_order ?? 0) + 1;
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -74,12 +65,8 @@ export default async function NewLessonBlockPage({
       </Link>
 
       <h1 className="mt-6 text-3xl font-bold text-gray-900">
-        Adaugă bloc
+        Editează blocul
       </h1>
-
-      <p className="mt-2 text-gray-600">
-        Lecție: {lesson.title}
-      </p>
 
       {query.error && (
         <div className="mt-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -88,14 +75,19 @@ export default async function NewLessonBlockPage({
       )}
 
       <LessonBlockForm
-        action={createLessonBlock.bind(
-            null,
-            id,
-            chapterId,
-            lessonId
+        action={updateLessonBlock.bind(
+          null,
+          id,
+          chapterId,
+          lessonId,
+          block.id
         )}
-        initialDisplayOrder={nextPosition}
-        />
+        initialType={block.type}
+        initialContent={block.content}
+        initialDisplayOrder={block.display_order}
+        initialIsActive={block.is_active}
+        submitLabel="Salvează modificările"
+      />
     </main>
   );
 }

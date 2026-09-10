@@ -91,24 +91,6 @@ export default async function NewSubjectPage({
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="displayOrder"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Ordine afișare
-          </label>
-
-          <input
-            id="displayOrder"
-            name="displayOrder"
-            type="number"
-            min="0"
-            defaultValue="0"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
-          />
-        </div>
-
         <label className="flex items-center gap-3">
           <input
             name="isActive"
