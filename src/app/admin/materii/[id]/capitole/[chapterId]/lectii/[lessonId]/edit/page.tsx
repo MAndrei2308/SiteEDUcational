@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateLesson } from "../../actions";
+import LessonBlockRenderer from "@/components/lesson/LessonBlockRenderer";
 
 type EditLessonPageProps = {
   params: Promise<{
@@ -233,9 +234,9 @@ export default async function EditLessonPage({
                   </span>
                 </div>
 
-                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-sm text-gray-700">
-                  {JSON.stringify(block.content, null, 2)}
-                </pre>
+                <div className="mt-4">
+                  <LessonBlockRenderer block={block} />
+                </div>
               </div>
             ))}
           </div>
