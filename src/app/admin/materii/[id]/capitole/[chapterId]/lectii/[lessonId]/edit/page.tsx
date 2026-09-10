@@ -51,6 +51,12 @@ export default async function EditLessonPage({
     .eq("chapter_id", chapterId)
     .single();
 
+  const { data: blocks, error: blocksError } = await supabase
+    .from("lesson_blocks")
+    .select("id, type, content, display_order, is_active")
+    .eq("lesson_id", lessonId)
+    .order("display_order", { ascending: true });
+
   console.log("SUBJECT ID:", id);
   console.log("CHAPTER ID:", chapterId);
   console.log("LESSON ID:", lessonId);
@@ -175,6 +181,66 @@ export default async function EditLessonPage({
           Salvează modificările
         </button>
       </form>
+
+      <section className="mt-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Conținutul lecției
+            </h2>
+
+            <p className="mt-2 text-gray-600">
+              Construiește lecția folosind blocuri de conținut.
+            </p>
+          </div>
+
+          <Link
+            href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou`}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
+          >
+            Adaugă bloc
+          </Link>
+        </div>
+
+        {blocksError && (
+          <p className="mt-6 text-red-600">
+            Blocurile nu au putut fi încărcate.
+          </p>
+        )}
+
+        {!blocksError && blocks?.length === 0 && (
+          <div className="mt-6 rounded-xl border border-gray-200 p-6">
+            <p className="text-gray-600">
+              Lecția nu are încă niciun bloc de conținut.
+            </p>
+          </div>
+        )}
+
+        {!blocksError && blocks && blocks.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {blocks.map((block) => (
+              <div
+                key={block.id}
+                className="rounded-xl border border-gray-200 p-5"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {block.type}
+                  </span>
+
+                  <span className="text-xs text-gray-400">
+                    Ordine: {block.display_order}
+                  </span>
+                </div>
+
+                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-sm text-gray-700">
+                  {JSON.stringify(block.content, null, 2)}
+                </pre>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
