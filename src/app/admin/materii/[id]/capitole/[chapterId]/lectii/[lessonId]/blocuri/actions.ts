@@ -89,7 +89,80 @@ export async function createLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE"].includes(type)) {
+  if (type === "CALLOUT") {
+    const text = String(formData.get("calloutText") ?? "").trim();
+
+    if (!text) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Textul callout-ului este obligatoriu."
+        )}`
+      );
+    }
+
+    content = {
+      variant: String(formData.get("calloutVariant") ?? "info"),
+      title: String(formData.get("calloutTitle") ?? "").trim(),
+      text,
+    };
+  }
+
+  if (type === "DIVIDER") {
+    content = {};
+  }
+
+  if (type === "IMAGE") {
+    const imageFile = formData.get("imageFile");
+    const alt = String(formData.get("imageAlt") ?? "").trim();
+    const caption = String(formData.get("imageCaption") ?? "").trim();
+
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Imaginea este obligatorie."
+        )}`
+      );
+    }
+
+    if (!alt) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Textul alternativ este obligatoriu."
+        )}`
+      );
+    }
+
+    const extension =
+      imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+
+    const filePath =
+      `${subjectId}/${chapterId}/${lessonId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("lesson-images")
+      .upload(filePath, imageFile, {
+        contentType: imageFile.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          uploadError.message
+        )}`
+      );
+    }
+
+    content = {
+      path: filePath,
+      alt,
+      caption,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -229,7 +302,115 @@ export async function updateLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE"].includes(type)) {
+  if (type === "CALLOUT") {
+    const text = String(formData.get("calloutText") ?? "").trim();
+
+    if (!text) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Textul callout-ului este obligatoriu."
+        )}`
+      );
+    }
+
+    content = {
+      variant: String(formData.get("calloutVariant") ?? "info"),
+      title: String(formData.get("calloutTitle") ?? "").trim(),
+      text,
+    };
+  }
+
+  if (type === "DIVIDER") {
+    content = {};
+  }
+
+  if (type === "IMAGE") {
+    const imageFile = formData.get("imageFile");
+    const alt = String(formData.get("imageAlt") ?? "").trim();
+    const caption = String(formData.get("imageCaption") ?? "").trim();
+
+    if (!alt) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+          "Textul alternativ este obligatoriu."
+        )}`
+      );
+    }
+
+    // Luăm imaginea actuală ca să putem păstra sau înlocui path-ul.
+    const { data: existingBlock, error: existingBlockError } =
+      await supabase
+        .from("lesson_blocks")
+        .select("content")
+        .eq("id", blockId)
+        .eq("lesson_id", lessonId)
+        .single();
+
+    if (existingBlockError || !existingBlock) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+          "Blocul nu a putut fi încărcat."
+        )}`
+      );
+    }
+
+    const oldPath = String(existingBlock.content?.path ?? "");
+
+    // Dacă nu alegem o imagine nouă, păstrăm imaginea existentă.
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
+      if (!oldPath) {
+        redirect(
+          `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+            "Imaginea este obligatorie."
+          )}`
+        );
+      }
+
+      content = {
+        path: oldPath,
+        alt,
+        caption,
+      };
+    } else {
+      const extension =
+        imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+
+      const fileName = `${crypto.randomUUID()}.${extension}`;
+
+      const newPath =
+        `${subjectId}/${chapterId}/${lessonId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("lesson-images")
+        .upload(newPath, imageFile, {
+          contentType: imageFile.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        redirect(
+          `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+            uploadError.message
+          )}`
+        );
+      }
+
+      content = {
+        path: newPath,
+        alt,
+        caption,
+      };
+
+      // Upload-ul nou a reușit, deci putem șterge vechea imagine.
+      if (oldPath) {
+        await supabase.storage
+          .from("lesson-images")
+          .remove([oldPath]);
+      }
+    }
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -285,6 +466,13 @@ export async function deleteLessonBlock(
     redirect("/login");
   }
 
+  const { data: block } = await supabase
+    .from("lesson_blocks")
+    .select("type, content")
+    .eq("id", blockId)
+    .eq("lesson_id", lessonId)
+    .single();
+
   const { error } = await supabase
     .from("lesson_blocks")
     .delete()
@@ -297,6 +485,16 @@ export async function deleteLessonBlock(
         error.message
       )}`
     );
+  }
+
+  if (block?.type === "IMAGE") {
+    const imagePath = String(block.content?.path ?? "");
+
+    if (imagePath) {
+      await supabase.storage
+        .from("lesson-images")
+        .remove([imagePath]);
+    }
   }
 
   redirect(

@@ -20,6 +20,7 @@ export default function LessonBlockForm({
   submitLabel = "Salvează blocul",
 }: LessonBlockFormProps) {
   const [type, setType] = useState(initialType);
+  const hasExistingImage = Boolean(initialContent.path);
 
   return (
     <form action={action} className="mt-8 space-y-6">
@@ -41,6 +42,9 @@ export default function LessonBlockForm({
           <option value="HEADING">Titlu</option>
           <option value="TEXT">Text</option>
           <option value="CODE">Cod</option>
+          <option value="CALLOUT">Callout</option>
+          <option value="DIVIDER">Separator</option>
+          <option value="IMAGE">Imagine</option>
         </select>
       </div>
 
@@ -149,6 +153,129 @@ export default function LessonBlockForm({
               spellCheck={false}
               defaultValue={String(initialContent.code ?? "")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono"
+            />
+          </div>
+        </>
+      )}
+
+      {type === "CALLOUT" && (
+        <>
+          <div>
+            <label
+              htmlFor="calloutVariant"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Tip callout
+            </label>
+
+            <select
+              id="calloutVariant"
+              name="calloutVariant"
+              defaultValue={String(initialContent.variant ?? "info")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="info">Info</option>
+              <option value="tip">Sfat</option>
+              <option value="warning">Atenție</option>
+              <option value="success">Important / Reținut</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="calloutTitle"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Titlu opțional
+            </label>
+
+            <input
+              id="calloutTitle"
+              name="calloutTitle"
+              type="text"
+              defaultValue={String(initialContent.title ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="calloutText"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Text
+            </label>
+
+            <textarea
+              id="calloutText"
+              name="calloutText"
+              rows={5}
+              required
+              defaultValue={String(initialContent.text ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </>
+      )}
+
+      {type === "IMAGE" && (
+        <>
+          <div>
+            <label
+              htmlFor="imageFile"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Imagine
+            </label>
+
+            <input
+              id="imageFile"
+              name="imageFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              required={!hasExistingImage}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+            {hasExistingImage && (
+              <p className="mt-1 text-xs text-gray-500">
+                Dacă nu alegi o imagine nouă, imaginea actuală va fi păstrată.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="imageAlt"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Text alternativ
+            </label>
+
+            <input
+              id="imageAlt"
+              name="imageAlt"
+              type="text"
+              required
+              defaultValue={String(initialContent.alt ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="imageCaption"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Legendă
+            </label>
+
+            <input
+              id="imageCaption"
+              name="imageCaption"
+              type="text"
+              defaultValue={String(initialContent.caption ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>
         </>

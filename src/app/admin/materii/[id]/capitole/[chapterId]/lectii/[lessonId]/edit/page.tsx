@@ -56,10 +56,36 @@ export default async function EditLessonPage({
     .single();
 
   const { data: blocks, error: blocksError } = await supabase
-    .from("lesson_blocks")
-    .select("id, type, content, display_order, is_active")
-    .eq("lesson_id", lessonId)
-    .order("display_order", { ascending: true });
+  .from("lesson_blocks")
+  .select("id, type, content, display_order, is_active")
+  .eq("lesson_id", lessonId)
+  .order("display_order", { ascending: true });
+
+  const blocksWithSignedUrls = await Promise.all(
+    (blocks ?? []).map(async (block) => {
+      if (block.type !== "IMAGE") {
+        return block;
+      }
+
+      const path = String(block.content?.path ?? "");
+
+      if (!path) {
+        return block;
+      }
+
+      const { data: signedData } = await supabase.storage
+        .from("lesson-images")
+        .createSignedUrl(path, 60 * 60);
+
+      return {
+        ...block,
+        content: {
+          ...block.content,
+          signedUrl: signedData?.signedUrl ?? null,
+        },
+      };
+    })
+  );  
 
   console.log("SUBJECT ID:", id);
   console.log("CHAPTER ID:", chapterId);
@@ -216,7 +242,7 @@ export default async function EditLessonPage({
           </p>
         )}
 
-        {!blocksError && blocks?.length === 0 && (
+        {!blocksError && blocksWithSignedUrls.length === 0 && (
           <div className="mt-6 rounded-xl border border-gray-200 p-6">
             <p className="text-gray-600">
               Lecția nu are încă niciun bloc de conținut.
@@ -224,89 +250,90 @@ export default async function EditLessonPage({
           </div>
         )}
 
-        {!blocksError && blocks && blocks.length > 0 && (
+        {!blocksError && blocksWithSignedUrls.length > 0 && (
           <div className="mt-6 space-y-4">
-            {blocks.map((block) => (
+            {blocksWithSignedUrls.map((block) => (
               <div
                 key={block.id}
                 className="rounded-xl border border-gray-200 p-5"
               >
                 <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {block.type}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      {block.type}
+                    </span>
 
-                  <span className="text-xs text-gray-400">
-                    Ordine: {block.display_order}
-                  </span>
+                    <span className="text-xs text-gray-400">
+                      Ordine: {block.display_order}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${block.id}/edit`}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                    >
+                      Editează
+                    </Link>
+
+                    <form
+                      action={deleteLessonBlock.bind(
+                        null,
+                        id,
+                        chapterId,
+                        lessonId,
+                        block.id
+                      )}
+                    >
+                      <button
+                        type="submit"
+                        className="text-sm font-medium text-red-600 hover:text-red-700"
+                      >
+                        Șterge
+                      </button>
+                    </form>
+
+                    <form
+                      action={moveLessonBlockUp.bind(
+                        null,
+                        id,
+                        chapterId,
+                        lessonId,
+                        block.id
+                      )}
+                    >
+                      <button
+                        type="submit"
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        ↑ Sus
+                      </button>
+                    </form>
+
+                    <form
+                      action={moveLessonBlockDown.bind(
+                        null,
+                        id,
+                        chapterId,
+                        lessonId,
+                        block.id
+                      )}
+                    >
+                      <button
+                        type="submit"
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                      >
+                        ↓ Jos
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Link
-                    href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${block.id}/edit`}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Editează
-                  </Link>
-
-                  <form
-                    action={deleteLessonBlock.bind(
-                      null,
-                      id,
-                      chapterId,
-                      lessonId,
-                      block.id
-                    )}
-                  >
-                    <button
-                      type="submit"
-                      className="text-sm font-medium text-red-600 hover:text-red-700"
-                    >
-                      Șterge
-                    </button>
-                  </form>
-
-                  <form
-                    action={moveLessonBlockUp.bind(
-                      null,
-                      id,
-                      chapterId,
-                      lessonId,
-                      block.id
-                    )}
-                  >
-                    <button
-                      type="submit"
-                      className="text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      ↑ Sus
-                    </button>
-                  </form>
-
-                  <form
-                    action={moveLessonBlockDown.bind(
-                      null,
-                      id,
-                      chapterId,
-                      lessonId,
-                      block.id
-                    )}
-                  >
-                    <button
-                      type="submit"
-                      className="text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      ↓ Jos
-                    </button>
-                  </form>
-                </div>
-              </div>
                 <div className="mt-4">
                   <LessonBlockRenderer block={block} />
                 </div>
               </div>
-            ))}
+))}
           </div>
         )}
       </section>
