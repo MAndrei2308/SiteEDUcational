@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requestEnrollment } from "./actions";
+import Link from "next/link"
 
 type SubjectPageProps = {
   params: Promise<{
@@ -248,9 +249,10 @@ export default async function SubjectPage({
                             a.display_order - b.display_order
                         )
                         .map((lesson) => (
-                          <div
+                          <Link
                             key={lesson.id}
-                            className="rounded-lg bg-gray-50 px-4 py-3"
+                            href={`/materii/${subject.slug}/lectii/${lesson.slug}`}
+                            className="block rounded-lg bg-gray-50 px-4 py-3 transition hover:bg-gray-100"
                           >
                             <p className="font-medium text-gray-900">
                               {lesson.title}
@@ -261,7 +263,7 @@ export default async function SubjectPage({
                                 {lesson.summary}
                               </p>
                             )}
-                          </div>
+                          </Link>
                         ))}
                     </div>
                   ) : (

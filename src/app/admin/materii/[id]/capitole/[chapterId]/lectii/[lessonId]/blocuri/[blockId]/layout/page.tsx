@@ -21,6 +21,72 @@ type LayoutPageProps = {
   }>;
 };
 
+function getBlockPreview(
+  type: string,
+  content: Record<string, unknown>
+) {
+  if (type === "HEADING") {
+    return String(content.text ?? "");
+  }
+
+  if (type === "TEXT") {
+    const text = String(content.text ?? "");
+    return text.length > 80
+      ? `${text.slice(0, 80)}...`
+      : text;
+  }
+
+  if (type === "CODE") {
+    return `Cod ${String(content.language ?? "text")}`;
+  }
+
+  if (type === "CALLOUT") {
+    return String(
+      content.title ??
+        content.text ??
+        "Callout"
+    );
+  }
+
+  if (type === "IMAGE") {
+    return String(
+      content.caption ??
+        content.alt ??
+        "Imagine"
+    );
+  }
+
+  if (type === "DIAGRAM") {
+    return "Diagramă Mermaid";
+  }
+
+  if (type === "QUIZ") {
+    return String(
+      content.question ?? "Quiz"
+    );
+  }
+
+  if (type === "VIDEO") {
+    return String(
+      content.title ?? "Video"
+    );
+  }
+
+  if (type === "FILE") {
+    return String(
+      content.title ??
+        content.originalName ??
+        "Fișier"
+    );
+  }
+
+  if (type === "DIVIDER") {
+    return "Separator";
+  }
+
+  return type;
+}
+
 export default async function LayoutPage({
   params,
   searchParams,
@@ -173,15 +239,26 @@ export default async function LayoutPage({
                     key={item.id}
                     className="flex items-center justify-between rounded-lg border border-gray-200 p-3"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {child?.type ?? "Bloc"}
-                      </p>
+                    {child && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {child.type}
+                          </span>
 
-                      <p className="text-xs text-gray-500">
-                        Ordine: {item.display_order}
-                      </p>
-                    </div>
+                          <span className="text-xs text-gray-400">
+                            #{item.display_order}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 max-w-xs truncate text-sm font-medium text-gray-900">
+                          {getBlockPreview(
+                            child.type,
+                            child.content
+                          )}
+                        </p>
+                      </>
+                    )}
 
                     <form
                       action={removeBlockFromLayout.bind(
@@ -270,15 +347,26 @@ export default async function LayoutPage({
                     key={item.id}
                     className="flex items-center justify-between rounded-lg border border-gray-200 p-3"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {child?.type ?? "Bloc"}
-                      </p>
+                    {child && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {child.type}
+                          </span>
 
-                      <p className="text-xs text-gray-500">
-                        Ordine: {item.display_order}
-                      </p>
-                    </div>
+                          <span className="text-xs text-gray-400">
+                            #{item.display_order}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 max-w-xs truncate text-sm font-medium text-gray-900">
+                          {getBlockPreview(
+                            child.type,
+                            child.content
+                          )}
+                        </p>
+                      </>
+                    )}
 
                     <form
                       action={removeBlockFromLayout.bind(
@@ -369,13 +457,22 @@ export default async function LayoutPage({
                 key={block.id}
                 className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
               >
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {block.type}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      {block.type}
+                    </span>
 
-                  <p className="text-sm text-gray-500">
-                    Ordine în lecție: {block.display_order}
+                    <span className="text-xs text-gray-400">
+                      #{block.display_order}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 truncate text-sm font-medium text-gray-900">
+                    {getBlockPreview(
+                      block.type,
+                      block.content
+                    )}
                   </p>
                 </div>
 
