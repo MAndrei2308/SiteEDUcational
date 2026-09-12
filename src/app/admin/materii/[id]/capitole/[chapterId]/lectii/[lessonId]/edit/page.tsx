@@ -63,7 +63,7 @@ export default async function EditLessonPage({
 
   const blocksWithSignedUrls = await Promise.all(
     (blocks ?? []).map(async (block) => {
-      if (block.type !== "IMAGE") {
+      if (block.type !== "IMAGE" && block.type !== "FILE") {
         return block;
       }
 
@@ -73,8 +73,13 @@ export default async function EditLessonPage({
         return block;
       }
 
+      const bucket =
+        block.type === "IMAGE"
+          ? "lesson-images"
+          : "lesson-files";
+
       const { data: signedData } = await supabase.storage
-        .from("lesson-images")
+        .from(bucket)
         .createSignedUrl(path, 60 * 60);
 
       return {
@@ -85,7 +90,7 @@ export default async function EditLessonPage({
         },
       };
     })
-  );  
+  );
 
   console.log("SUBJECT ID:", id);
   console.log("CHAPTER ID:", chapterId);

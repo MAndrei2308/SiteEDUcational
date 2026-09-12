@@ -47,6 +47,8 @@ export default function LessonBlockForm({
           <option value="IMAGE">Imagine</option>
           <option value="DIAGRAM">Diagramă</option>
           <option value="QUIZ">Quiz</option>
+          <option value="VIDEO">Video</option>
+          <option value="FILE">Fișier</option>
         </select>
       </div>
 
@@ -388,6 +390,107 @@ export default function LessonBlockForm({
               name="quizExplanation"
               rows={4}
               defaultValue={String(initialContent.explanation ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </>
+      )}
+
+      {type === "VIDEO" && (
+        <>
+          <div>
+            <label
+              htmlFor="videoUrl"
+              className="block text-sm font-medium text-gray-700"
+            >
+              URL video
+            </label>
+
+            <input
+              id="videoUrl"
+              name="videoUrl"
+              type="url"
+              required
+              defaultValue={String(initialContent.url ?? "")}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="videoTitle"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Titlu
+            </label>
+
+            <input
+              id="videoTitle"
+              name="videoTitle"
+              type="text"
+              defaultValue={String(initialContent.title ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </>
+      )}
+
+      {type === "FILE" && (
+        <>
+          <div>
+            <label
+              htmlFor="lessonFile"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Fișier
+            </label>
+
+            <input
+              id="lessonFile"
+              name="lessonFile"
+              type="file"
+              required={!Boolean(initialContent.path)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+
+            {Boolean(initialContent.path) && (
+              <p className="mt-1 text-xs text-gray-500">
+                Dacă nu alegi alt fișier, cel actual va fi păstrat.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="fileTitle"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Titlu afișat
+            </label>
+
+            <input
+              id="fileTitle"
+              name="fileTitle"
+              type="text"
+              defaultValue={String(initialContent.title ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="fileDescription"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Descriere
+            </label>
+
+            <textarea
+              id="fileDescription"
+              name="fileDescription"
+              rows={3}
+              defaultValue={String(initialContent.description ?? "")}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>

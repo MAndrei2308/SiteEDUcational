@@ -211,7 +211,71 @@ export async function createLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ"].includes(type)) {
+  if (type === "VIDEO") {
+    const url = String(formData.get("videoUrl") ?? "").trim();
+    const title = String(formData.get("videoTitle") ?? "").trim();
+
+    if (!url) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "URL-ul video este obligatoriu."
+        )}`
+      );
+    }
+
+    content = {
+      url,
+      title,
+    };
+  }
+
+  if (type === "FILE") {
+    const lessonFile = formData.get("lessonFile");
+    const title = String(formData.get("fileTitle") ?? "").trim();
+    const description = String(
+      formData.get("fileDescription") ?? ""
+    ).trim();
+
+    if (!(lessonFile instanceof File) || lessonFile.size === 0) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Fișierul este obligatoriu."
+        )}`
+      );
+    }
+
+    const extension =
+      lessonFile.name.split(".").pop()?.toLowerCase() ?? "bin";
+
+    const fileName = `${crypto.randomUUID()}.${extension}`;
+
+    const filePath =
+      `${subjectId}/${chapterId}/${lessonId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("lesson-files")
+      .upload(filePath, lessonFile, {
+        contentType: lessonFile.type || undefined,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          uploadError.message
+        )}`
+      );
+    }
+
+    content = {
+      path: filePath,
+      originalName: lessonFile.name,
+      title: title || lessonFile.name,
+      description,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -508,7 +572,105 @@ export async function updateLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ"].includes(type)) {
+  if (type === "VIDEO") {
+    const url = String(formData.get("videoUrl") ?? "").trim();
+    const title = String(formData.get("videoTitle") ?? "").trim();
+
+    if (!url) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "URL-ul video este obligatoriu."
+        )}`
+      );
+    }
+
+    content = {
+      url,
+      title,
+    };
+  }
+
+  if (type === "FILE") {
+    const lessonFile = formData.get("lessonFile");
+    const title = String(formData.get("fileTitle") ?? "").trim();
+    const description = String(
+      formData.get("fileDescription") ?? ""
+    ).trim();
+
+    const { data: existingBlock, error: existingBlockError } =
+      await supabase
+        .from("lesson_blocks")
+        .select("content")
+        .eq("id", blockId)
+        .eq("lesson_id", lessonId)
+        .single();
+
+    if (existingBlockError || !existingBlock) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+          "Blocul nu a putut fi încărcat."
+        )}`
+      );
+    }
+
+    const oldPath = String(existingBlock.content?.path ?? "");
+    const oldName = String(existingBlock.content?.originalName ?? "");
+
+    if (!(lessonFile instanceof File) || lessonFile.size === 0) {
+      if (!oldPath) {
+        redirect(
+          `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+            "Fișierul este obligatoriu."
+          )}`
+        );
+      }
+
+      content = {
+        path: oldPath,
+        originalName: oldName,
+        title: title || oldName,
+        description,
+      };
+    } else {
+      const extension =
+        lessonFile.name.split(".").pop()?.toLowerCase() ?? "bin";
+
+      const fileName = `${crypto.randomUUID()}.${extension}`;
+
+      const newPath =
+        `${subjectId}/${chapterId}/${lessonId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("lesson-files")
+        .upload(newPath, lessonFile, {
+          contentType: lessonFile.type || undefined,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        redirect(
+          `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+            uploadError.message
+          )}`
+        );
+      }
+
+      content = {
+        path: newPath,
+        originalName: lessonFile.name,
+        title: title || lessonFile.name,
+        description,
+      };
+
+      if (oldPath) {
+        await supabase.storage
+          .from("lesson-files")
+          .remove([oldPath]);
+      }
+    }
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -592,6 +754,16 @@ export async function deleteLessonBlock(
       await supabase.storage
         .from("lesson-images")
         .remove([imagePath]);
+    }
+  }
+
+  if (block?.type === "FILE") {
+    const filePath = String(block.content?.path ?? "");
+
+    if (filePath) {
+      await supabase.storage
+        .from("lesson-files")
+        .remove([filePath]);
     }
   }
 

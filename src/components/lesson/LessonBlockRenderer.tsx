@@ -197,6 +197,126 @@ export default function LessonBlockRenderer({
     );
   }
 
+  if (block.type === "VIDEO") {
+    const url = String(block.content.url ?? "");
+    const title = String(block.content.title ?? "Video");
+
+    let embedUrl: string | null = null;
+
+    try {
+      const parsedUrl = new URL(url);
+
+      if (
+        parsedUrl.hostname === "www.youtube.com" ||
+        parsedUrl.hostname === "youtube.com"
+      ) {
+        const videoId = parsedUrl.searchParams.get("v");
+
+        if (videoId) {
+          embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+
+      if (parsedUrl.hostname === "youtu.be") {
+        const videoId = parsedUrl.pathname.replace("/", "");
+
+        if (videoId) {
+          embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+    } catch {
+      embedUrl = null;
+    }
+
+    if (!embedUrl) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 p-4">
+          <p className="text-sm text-gray-500">
+            Link video invalid sau nesuportat.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <figure className="space-y-2">
+        <div className="aspect-video overflow-hidden rounded-xl">
+          <iframe
+            src={embedUrl}
+            title={title}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+
+        {title && (
+          <figcaption className="text-center text-sm text-gray-500">
+            {title}
+          </figcaption>
+        )}
+      </figure>
+    );
+  }
+
+  if (block.type === "FILE") {
+    const signedUrl =
+      typeof block.content.signedUrl === "string"
+        ? block.content.signedUrl
+        : null;
+
+    const originalName = String(
+      block.content.originalName ?? "Fișier"
+    );
+
+    const title = String(
+      block.content.title ?? originalName
+    );
+
+    const description = String(
+      block.content.description ?? ""
+    );
+
+    if (!signedUrl) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 p-4">
+          <p className="text-sm text-gray-500">
+            Fișierul nu poate fi descărcat momentan.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border border-gray-200 p-5">
+        <div>
+          <p className="font-semibold text-gray-900">
+            {title}
+          </p>
+
+          {description && (
+            <p className="mt-1 text-sm text-gray-600">
+              {description}
+            </p>
+          )}
+
+          <p className="mt-2 text-xs text-gray-400">
+            {originalName}
+          </p>
+        </div>
+
+        <a
+          href={signedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
+        >
+          Descarcă fișierul
+        </a>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-dashed border-gray-300 p-4">
       <p className="text-sm text-gray-500">
