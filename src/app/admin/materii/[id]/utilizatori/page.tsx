@@ -41,6 +41,10 @@ export default async function SubjectUsersPage({
     redirect("/dashboard");
   }
 
+  // -------------------------------------------------------
+  // Materia
+  // -------------------------------------------------------
+
   const { data: subject, error: subjectError } = await supabase
     .from("subjects")
     .select("id, name")
@@ -51,10 +55,15 @@ export default async function SubjectUsersPage({
     notFound();
   }
 
+  // -------------------------------------------------------
+  // Utilizatorii înscriși
+  // -------------------------------------------------------
+
   const { data: enrollments, error } = await supabase
     .from("enrollments")
     .select(`
       id,
+      user_id,
       status,
       created_at,
       profiles (
@@ -64,8 +73,107 @@ export default async function SubjectUsersPage({
     .eq("subject_id", id)
     .order("created_at", { ascending: false });
 
+  // -------------------------------------------------------
+  // Capitolele active ale materiei
+  // -------------------------------------------------------
+
+  const { data: chapters } = await supabase
+    .from("chapters")
+    .select("id")
+    .eq("subject_id", subject.id)
+    .eq("is_active", true);
+
+  const chapterIds =
+    chapters?.map((chapter) => chapter.id) ?? [];
+
+  // -------------------------------------------------------
+  // Lecțiile active ale materiei
+  // -------------------------------------------------------
+
+  let lessons:
+    | {
+        id: string;
+      }[]
+    | null = [];
+
+  if (chapterIds.length > 0) {
+    const { data } = await supabase
+      .from("lessons")
+      .select("id")
+      .in("chapter_id", chapterIds)
+      .eq("is_active", true);
+
+    lessons = data;
+  }
+
+  const lessonIds =
+    lessons?.map((lesson) => lesson.id) ?? [];
+
+  const totalLessons = lessonIds.length;
+
+  // -------------------------------------------------------
+  // Progresul elevilor
+  // -------------------------------------------------------
+
+  let progressData:
+    | {
+        user_id: string;
+        lesson_id: string;
+        status: string;
+        updated_at: string;
+      }[]
+    | null = [];
+
+  if (lessonIds.length > 0) {
+    const { data } = await supabase
+      .from("lesson_progress")
+      .select(`
+        user_id,
+        lesson_id,
+        status,
+        updated_at
+      `)
+      .in("lesson_id", lessonIds);
+
+    progressData = data;
+  }
+
+  // -------------------------------------------------------
+  // Grupăm progresul după utilizator
+  // -------------------------------------------------------
+
+  const progressByUser = new Map<
+    string,
+    {
+      completedLessons: number;
+      lastActivity: string | null;
+    }
+  >();
+
+  for (const progress of progressData ?? []) {
+    const current =
+      progressByUser.get(progress.user_id) ?? {
+        completedLessons: 0,
+        lastActivity: null,
+      };
+
+    if (progress.status === "COMPLETED") {
+      current.completedLessons += 1;
+    }
+
+    if (
+      !current.lastActivity ||
+      new Date(progress.updated_at) >
+        new Date(current.lastActivity)
+    ) {
+      current.lastActivity = progress.updated_at;
+    }
+
+    progressByUser.set(progress.user_id, current);
+  }
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-16">
+    <main className="mx-auto max-w-7xl px-6 py-16">
       <Link
         href="/admin/materii"
         className="text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -78,7 +186,7 @@ export default async function SubjectUsersPage({
       </h1>
 
       <p className="mt-2 text-gray-600">
-        Gestionează utilizatorii înscriși la această materie.
+        Gestionează utilizatorii înscriși și urmărește progresul lor.
       </p>
 
       {error && (
@@ -96,19 +204,30 @@ export default async function SubjectUsersPage({
       )}
 
       {!error && enrollments && enrollments.length > 0 && (
-        <div className="mt-8 overflow-hidden rounded-xl border border-gray-200">
-          <table className="w-full text-left">
+        <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200">
+          <table className="w-full min-w-[1000px] text-left">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Utilizator
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Status
                 </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Data înscrierii
                 </th>
+
+                <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  Progres
+                </th>
+
+                <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  Ultima activitate
+                </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Acțiuni
                 </th>
@@ -116,91 +235,181 @@ export default async function SubjectUsersPage({
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {enrollments.map((enrollment) => (
-                <tr key={enrollment.id}>
-                  <td className="px-4 py-3 text-gray-900">
-                    {enrollment.profiles?.full_name || "Utilizator"}
-                  </td>
+              {enrollments.map((enrollment) => {
+                const userProgress =
+                  progressByUser.get(enrollment.user_id);
 
-                  <td className="px-4 py-3 text-gray-600">
-                    {enrollment.status}
-                  </td>
+                const completedLessons =
+                  userProgress?.completedLessons ?? 0;
 
-                  <td className="px-4 py-3 text-gray-600">
-                    {new Date(enrollment.created_at).toLocaleDateString("ro-RO")}
-                  </td>
+                const progressPercent =
+                  totalLessons > 0
+                    ? Math.round(
+                        (completedLessons / totalLessons) *
+                          100
+                      )
+                    : 0;
 
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-3">
-                        {enrollment.status !== "APPROVED" && (
-                        <form
+                return (
+                  <tr key={enrollment.id}>
+                    <td className="px-4 py-4 text-gray-900">
+                      {enrollment.profiles?.full_name ||
+                        "Utilizator"}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {enrollment.status === "APPROVED" && (
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                          Aprobat
+                        </span>
+                      )}
+
+                      {enrollment.status === "PENDING" && (
+                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                          În așteptare
+                        </span>
+                      )}
+
+                      {enrollment.status === "REJECTED" && (
+                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                          Respins
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {new Date(
+                        enrollment.created_at
+                      ).toLocaleDateString("ro-RO")}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      {enrollment.status === "APPROVED" ? (
+                        <div className="min-w-44">
+                          <div className="flex items-center justify-between gap-4 text-sm">
+                            <span className="text-gray-600">
+                              {completedLessons}/{totalLessons}
+                            </span>
+
+                            <span className="font-medium text-gray-900">
+                              {progressPercent}%
+                            </span>
+                          </div>
+
+                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                            <div
+                              className="h-full rounded-full bg-gray-900"
+                              style={{
+                                width: `${progressPercent}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">
+                          —
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {userProgress?.lastActivity
+                        ? new Date(
+                            userProgress.lastActivity
+                          ).toLocaleString("ro-RO", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "Fără activitate"}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-3">
+                        {enrollment.status !==
+                          "APPROVED" && (
+                          <form
                             action={approveEnrollment.bind(
-                            null,
-                            enrollment.id,
-                            subject.id
+                              null,
+                              enrollment.id,
+                              subject.id
                             )}
-                        >
+                          >
                             <button
-                            type="submit"
-                            className="text-sm font-medium text-green-700 hover:text-green-800"
+                              type="submit"
+                              className="text-sm font-medium text-green-700 hover:text-green-800"
                             >
-                            Aprobă
+                              Aprobă
                             </button>
-                        </form>
+                          </form>
                         )}
 
-                        {enrollment.status === "PENDING" && (
-                        <form
+                        {enrollment.status ===
+                          "PENDING" && (
+                          <form
                             action={rejectEnrollment.bind(
-                            null,
-                            enrollment.id,
-                            subject.id
+                              null,
+                              enrollment.id,
+                              subject.id
                             )}
-                        >
+                          >
                             <button
-                            type="submit"
-                            className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                              type="submit"
+                              className="text-sm font-medium text-gray-700 hover:text-gray-900"
                             >
-                            Respinge
+                              Respinge
                             </button>
-                        </form>
+                          </form>
                         )}
 
                         {enrollment.status === "APPROVED" && (
-                        <form
+                          <Link
+                            href={`/admin/materii/${subject.id}/utilizatori/${enrollment.user_id}`}
+                            className="text-sm font-medium text-blue-700 hover:text-blue-800"
+                          >
+                            Vezi progresul
+                          </Link>
+                        )}
+
+                        {enrollment.status ===
+                          "APPROVED" && (
+                          <form
                             action={revokeEnrollment.bind(
-                            null,
-                            enrollment.id,
-                            subject.id
+                              null,
+                              enrollment.id,
+                              subject.id
                             )}
-                        >
+                          >
                             <button
-                            type="submit"
-                            className="text-sm font-medium text-orange-700 hover:text-orange-800"
+                              type="submit"
+                              className="text-sm font-medium text-orange-700 hover:text-orange-800"
                             >
-                            Revocă accesul
+                              Revocă accesul
                             </button>
-                        </form>
+                          </form>
                         )}
 
                         <form
-                        action={deleteEnrollment.bind(
+                          action={deleteEnrollment.bind(
                             null,
                             enrollment.id,
                             subject.id
-                        )}
+                          )}
                         >
-                        <button
+                          <button
                             type="submit"
                             className="text-sm font-medium text-red-600 hover:text-red-700"
-                        >
+                          >
                             Șterge
-                        </button>
+                          </button>
                         </form>
-                    </div>
+                      </div>
                     </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
