@@ -46,6 +46,7 @@ export default function LessonBlockForm({
           <option value="DIVIDER">Separator</option>
           <option value="IMAGE">Imagine</option>
           <option value="DIAGRAM">Diagramă</option>
+          <option value="QUIZ">Quiz</option>
         </select>
       </div>
 
@@ -305,6 +306,92 @@ export default function LessonBlockForm({
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono"
           />
         </div>
+      )}
+
+      {type === "QUIZ" && (
+        <>
+          <div>
+            <label
+              htmlFor="quizQuestion"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Întrebare
+            </label>
+
+            <textarea
+              id="quizQuestion"
+              name="quizQuestion"
+              rows={3}
+              required
+              defaultValue={String(initialContent.question ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+
+          {[0, 1, 2, 3].map((index) => {
+            const answers = Array.isArray(initialContent.answers)
+              ? initialContent.answers
+              : [];
+
+            return (
+              <div key={index}>
+                <label
+                  htmlFor={`quizAnswer${index}`}
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Varianta {index + 1}
+                </label>
+
+                <input
+                  id={`quizAnswer${index}`}
+                  name={`quizAnswer${index}`}
+                  type="text"
+                  required
+                  defaultValue={String(answers[index] ?? "")}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+              </div>
+            );
+          })}
+
+          <div>
+            <label
+              htmlFor="quizCorrectAnswer"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Răspuns corect
+            </label>
+
+            <select
+              id="quizCorrectAnswer"
+              name="quizCorrectAnswer"
+              defaultValue={String(initialContent.correctAnswer ?? 0)}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="0">Varianta 1</option>
+              <option value="1">Varianta 2</option>
+              <option value="2">Varianta 3</option>
+              <option value="3">Varianta 4</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="quizExplanation"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Explicație
+            </label>
+
+            <textarea
+              id="quizExplanation"
+              name="quizExplanation"
+              rows={4}
+              defaultValue={String(initialContent.explanation ?? "")}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </div>
+        </>
       )}
 
       <div>

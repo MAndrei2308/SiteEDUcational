@@ -176,7 +176,42 @@ export async function createLessonBlock(
     content = { code };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM"].includes(type)) {
+  if (type === "QUIZ") {
+    const question = String(
+      formData.get("quizQuestion") ?? ""
+    ).trim();
+
+    const answers = [0, 1, 2, 3].map((index) =>
+      String(
+        formData.get(`quizAnswer${index}`) ?? ""
+      ).trim()
+    );
+
+    const correctAnswer = Number(
+      formData.get("quizCorrectAnswer") ?? 0
+    );
+
+    const explanation = String(
+      formData.get("quizExplanation") ?? ""
+    ).trim();
+
+    if (!question || answers.some((answer) => !answer)) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Întrebarea și toate variantele de răspuns sunt obligatorii."
+        )}`
+      );
+    }
+
+    content = {
+      question,
+      answers,
+      correctAnswer,
+      explanation,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -438,7 +473,42 @@ export async function updateLessonBlock(
     content = { code };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM"].includes(type)) {
+  if (type === "QUIZ") {
+    const question = String(
+      formData.get("quizQuestion") ?? ""
+    ).trim();
+
+    const answers = [0, 1, 2, 3].map((index) =>
+      String(
+        formData.get(`quizAnswer${index}`) ?? ""
+      ).trim()
+    );
+
+    const correctAnswer = Number(
+      formData.get("quizCorrectAnswer") ?? 0
+    );
+
+    const explanation = String(
+      formData.get("quizExplanation") ?? ""
+    ).trim();
+
+    if (!question || answers.some((answer) => !answer)) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Întrebarea și toate variantele de răspuns sunt obligatorii."
+        )}`
+      );
+    }
+
+    content = {
+      question,
+      answers,
+      correctAnswer,
+      explanation,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
         "Tip de bloc invalid."

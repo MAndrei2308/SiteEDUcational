@@ -1,4 +1,5 @@
 import MermaidDiagram from "@/components/lesson/MermaidDiagram";
+import QuizBlock from "@/components/lesson/QuizBlock";
 
 type LessonBlock = {
   id: string;
@@ -155,6 +156,45 @@ export default function LessonBlockRenderer({
     }
 
     return <MermaidDiagram code={code} />;
+  }
+
+  if (block.type === "QUIZ") {
+    const question = String(
+      block.content.question ?? ""
+    );
+
+    const answers = Array.isArray(block.content.answers)
+      ? block.content.answers.map((answer) =>
+          String(answer)
+        )
+      : [];
+
+    const correctAnswer = Number(
+      block.content.correctAnswer ?? 0
+    );
+
+    const explanation = String(
+      block.content.explanation ?? ""
+    );
+
+    if (!question || answers.length === 0) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 p-4">
+          <p className="text-sm text-gray-500">
+            Quiz-ul nu este configurat corect.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <QuizBlock
+        question={question}
+        answers={answers}
+        correctAnswer={correctAnswer}
+        explanation={explanation}
+      />
+    );
   }
 
   return (
