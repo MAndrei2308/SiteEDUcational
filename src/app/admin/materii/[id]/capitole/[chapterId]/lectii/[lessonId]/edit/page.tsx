@@ -56,10 +56,21 @@ export default async function EditLessonPage({
     .single();
 
   const { data: blocks, error: blocksError } = await supabase
-  .from("lesson_blocks")
-  .select("id, type, content, display_order, is_active")
-  .eq("lesson_id", lessonId)
-  .order("display_order", { ascending: true });
+    .from("lesson_blocks")
+    .select("id, type, content, display_order, is_active")
+    .eq("lesson_id", lessonId)
+    .order("display_order", { ascending: true });
+
+  const { data: layoutItems, error: layoutItemsError } = await supabase
+    .from("lesson_layout_items")
+    .select(`
+      id,
+      layout_block_id,
+      child_block_id,
+      slot,
+      display_order
+    `)
+    .order("display_order", { ascending: true });
 
   const blocksWithSignedUrls = await Promise.all(
     (blocks ?? []).map(async (block) => {
@@ -91,6 +102,49 @@ export default async function EditLessonPage({
       };
     })
   );
+
+  const childBlockIds = new Set(
+    (layoutItems ?? []).map((item) => item.child_block_id)
+  );
+
+  const topLevelBlocks = blocksWithSignedUrls.filter(
+    (block) => !childBlockIds.has(block.id)
+  );
+
+  const layoutChildrenMap = new Map<
+    string,
+    {
+      left: typeof blocksWithSignedUrls;
+      right: typeof blocksWithSignedUrls;
+    }
+  >();
+
+  for (const item of layoutItems ?? []) {
+    const childBlock = blocksWithSignedUrls.find(
+      (block) => block.id === item.child_block_id
+    );
+
+    if (!childBlock) {
+      continue;
+    }
+
+    if (!layoutChildrenMap.has(item.layout_block_id)) {
+      layoutChildrenMap.set(item.layout_block_id, {
+        left: [],
+        right: [],
+      });
+    }
+
+    const layout = layoutChildrenMap.get(item.layout_block_id)!;
+
+    if (item.slot === "left") {
+      layout.left.push(childBlock);
+    }
+
+    if (item.slot === "right") {
+      layout.right.push(childBlock);
+    }
+  }
 
   console.log("SUBJECT ID:", id);
   console.log("CHAPTER ID:", chapterId);
@@ -257,7 +311,7 @@ export default async function EditLessonPage({
 
         {!blocksError && blocksWithSignedUrls.length > 0 && (
           <div className="mt-6 space-y-4">
-            {blocksWithSignedUrls.map((block) => (
+            {topLevelBlocks.map((block) => (
               <div
                 key={block.id}
                 className="rounded-xl border border-gray-200 p-5"
@@ -280,6 +334,15 @@ export default async function EditLessonPage({
                     >
                       Editează
                     </Link>
+
+                    {block.type === "LAYOUT" && (
+                      <Link
+                        href={`/admin/materii/${id}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${block.id}/layout`}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        Configurează layout
+                      </Link>
+                    )}
 
                     <form
                       action={deleteLessonBlock.bind(
@@ -335,7 +398,14 @@ export default async function EditLessonPage({
                 </div>
 
                 <div className="mt-4">
-                  <LessonBlockRenderer block={block} />
+                  <LessonBlockRenderer
+                    block={block}
+                    layoutChildren={
+                      block.type === "LAYOUT"
+                        ? layoutChildrenMap.get(block.id)
+                        : undefined
+                    }
+                  />
                 </div>
               </div>
 ))}

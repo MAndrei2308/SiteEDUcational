@@ -9,10 +9,15 @@ type LessonBlock = {
 
 type LessonBlockRendererProps = {
   block: LessonBlock;
+  layoutChildren?: {
+    left: LessonBlock[];
+    right: LessonBlock[];
+  };
 };
 
 export default function LessonBlockRenderer({
   block,
+  layoutChildren,
 }: LessonBlockRendererProps) {
   if (block.type === "HEADING") {
     const text = String(block.content.text ?? "");
@@ -313,6 +318,63 @@ export default function LessonBlockRenderer({
         >
           Descarcă fișierul
         </a>
+      </div>
+    );
+  }
+
+  if (block.type === "LAYOUT") {
+    const template = String(
+      block.content.template ?? "two-columns-50-50"
+    );
+
+    const supportedTemplates = [
+      "two-columns-50-50",
+      "two-columns-33-67",
+      "two-columns-67-33",
+    ];
+
+    if (!supportedTemplates.includes(template)) {
+      return (
+        <div className="rounded-lg border border-dashed border-gray-300 p-4">
+          <p className="text-sm text-gray-500">
+            Template layout nesuportat.
+          </p>
+        </div>
+      );
+    }
+
+    const gridStyle =
+      template === "two-columns-33-67"
+        ? { gridTemplateColumns: "1fr 2fr" }
+        : template === "two-columns-67-33"
+          ? { gridTemplateColumns: "2fr 1fr" }
+          : { gridTemplateColumns: "1fr 1fr" };
+
+    const left = layoutChildren?.left ?? [];
+    const right = layoutChildren?.right ?? [];
+
+    return (
+      <div
+        className="grid gap-6"
+        style={gridStyle}
+      >
+        <div className="space-y-4">
+          {left.map((child) => (
+            <LessonBlockRenderer
+              key={child.id}
+              block={child}
+            />
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {right.map((child) => (
+            <LessonBlockRenderer
+              key={child.id}
+              block={child}
+            />
+          ))}
+        </div>
       </div>
     );
   }

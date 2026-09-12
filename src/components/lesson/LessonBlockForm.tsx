@@ -49,6 +49,7 @@ export default function LessonBlockForm({
           <option value="QUIZ">Quiz</option>
           <option value="VIDEO">Video</option>
           <option value="FILE">Fișier</option>
+          <option value="LAYOUT">Layout</option>
         </select>
       </div>
 
@@ -495,6 +496,38 @@ export default function LessonBlockForm({
             />
           </div>
         </>
+      )}
+
+      {type === "LAYOUT" && (
+        <div>
+          <label
+            htmlFor="layoutTemplate"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Template
+          </label>
+
+          <select
+            id="layoutTemplate"
+            name="layoutTemplate"
+            defaultValue={String(
+              initialContent.template ?? "two-columns-50-50"
+            )}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+          >
+            <option value="two-columns-50-50">
+              Două coloane 50 / 50
+            </option>
+
+            <option value="two-columns-33-67">
+              Două coloane 33 / 67
+            </option>
+
+            <option value="two-columns-67-33">
+              Două coloane 67 / 33
+            </option>
+          </select>
+        </div>
       )}
 
       <div>

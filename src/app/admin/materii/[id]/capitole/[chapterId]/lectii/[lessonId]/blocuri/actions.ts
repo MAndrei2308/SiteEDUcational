@@ -275,7 +275,31 @@ export async function createLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE"].includes(type)) {
+  if (type === "LAYOUT") {
+    const template = String(
+      formData.get("layoutTemplate") ?? "two-columns-50-50"
+    );
+
+    if (
+      ![
+        "two-columns-50-50",
+        "two-columns-33-67",
+        "two-columns-67-33",
+      ].includes(template)
+    ) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Template de layout invalid."
+        )}`
+      );
+    }
+
+    content = {
+      template,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE", "LAYOUT"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -670,7 +694,31 @@ export async function updateLessonBlock(
     }
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE"].includes(type)) {
+  if (type === "LAYOUT") {
+    const template = String(
+      formData.get("layoutTemplate") ?? "two-columns-50-50"
+    );
+
+    const supportedTemplates = [
+      "two-columns-50-50",
+      "two-columns-33-67",
+      "two-columns-67-33",
+    ];
+
+    if (!supportedTemplates.includes(template)) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
+          "Template de layout invalid."
+        )}`
+      );
+    }
+
+    content = {
+      template,
+    };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM", "QUIZ", "VIDEO", "FILE", "LAYOUT"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
         "Tip de bloc invalid."
