@@ -162,7 +162,21 @@ export async function createLessonBlock(
     };
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE"].includes(type)) {
+  if (type === "DIAGRAM") {
+    const code = String(formData.get("diagramCode") ?? "").trim();
+
+    if (!code) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Codul diagramei este obligatoriu."
+        )}`
+      );
+    }
+
+    content = { code };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
         "Tip de bloc invalid."
@@ -410,7 +424,21 @@ export async function updateLessonBlock(
     }
   }
 
-  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE"].includes(type)) {
+  if (type === "DIAGRAM") {
+    const code = String(formData.get("diagramCode") ?? "").trim();
+
+    if (!code) {
+      redirect(
+        `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/nou?error=${encodeURIComponent(
+          "Codul diagramei este obligatoriu."
+        )}`
+      );
+    }
+
+    content = { code };
+  }
+
+  if (!["HEADING", "TEXT", "CODE", "CALLOUT", "DIVIDER", "IMAGE", "DIAGRAM"].includes(type)) {
     redirect(
       `/admin/materii/${subjectId}/capitole/${chapterId}/lectii/${lessonId}/blocuri/${blockId}/edit?error=${encodeURIComponent(
         "Tip de bloc invalid."

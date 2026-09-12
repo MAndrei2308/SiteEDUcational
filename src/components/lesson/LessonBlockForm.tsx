@@ -45,6 +45,7 @@ export default function LessonBlockForm({
           <option value="CALLOUT">Callout</option>
           <option value="DIVIDER">Separator</option>
           <option value="IMAGE">Imagine</option>
+          <option value="DIAGRAM">Diagramă</option>
         </select>
       </div>
 
@@ -279,6 +280,31 @@ export default function LessonBlockForm({
             />
           </div>
         </>
+      )}
+
+      {type === "DIAGRAM" && (
+        <div>
+          <label
+            htmlFor="diagramCode"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Cod Mermaid
+          </label>
+
+          <textarea
+            id="diagramCode"
+            name="diagramCode"
+            rows={12}
+            required
+            spellCheck={false}
+            defaultValue={String(initialContent.code ?? "")}
+            placeholder={`flowchart TD
+      A[Start] --> B{Condiție}
+      B -->|Da| C[Acțiune]
+      B -->|Nu| D[Stop]`}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono"
+          />
+        </div>
       )}
 
       <div>
