@@ -52,6 +52,13 @@ export default async function SubjectPage({
       }[]
     | null = null;
 
+      let lessonProgress:
+  | {
+      lesson_id: string;
+      status: "IN_PROGRESS" | "COMPLETED";
+    }[]
+  | null = null;
+
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -98,8 +105,49 @@ export default async function SubjectPage({
         .order("display_order", { ascending: true });
 
       chapters = data;
+
+      const { data: progressData } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, status")
+        .eq("user_id", user.id);
+
+      lessonProgress = progressData;
     }
   }
+
+  const progressMap = new Map(
+    (lessonProgress ?? []).map((item) => [
+      item.lesson_id,
+      item.status,
+    ])
+  );
+
+  const totalSubjectLessons =
+    chapters?.reduce(
+      (total, chapter) =>
+        total + (chapter.lessons?.length ?? 0),
+      0
+    ) ?? 0;
+
+  const completedSubjectLessons =
+    chapters?.reduce(
+      (total, chapter) =>
+        total +
+        (chapter.lessons?.filter(
+          (lesson) =>
+            progressMap.get(lesson.id) === "COMPLETED"
+        ).length ?? 0),
+      0
+    ) ?? 0;
+
+  const subjectProgress =
+    totalSubjectLessons > 0
+      ? Math.round(
+          (completedSubjectLessons /
+            totalSubjectLessons) *
+            100
+        )
+      : 0;
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-16">
@@ -212,6 +260,40 @@ export default async function SubjectPage({
           )}
       </div>
 
+      {hasAccess &&
+        userRole !== "ADMIN" &&
+        chapters &&
+        chapters.length > 0 && (
+          <div className="mt-10 rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Progres total
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-600">
+                  Progresul tău în această materie
+                </p>
+              </div>
+
+              <span className="font-medium text-gray-900">
+                {completedSubjectLessons}/{totalSubjectLessons} lecții
+                {" · "}
+                {subjectProgress}%
+              </span>
+            </div>
+
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-gray-900 transition-all"
+                style={{
+                  width: `${subjectProgress}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
       {hasAccess && (
         <section className="mt-10">
           <h2 className="text-2xl font-bold text-gray-900">
@@ -226,53 +308,123 @@ export default async function SubjectPage({
             </div>
           ) : (
             <div className="mt-6 space-y-6">
-              {chapters.map((chapter) => (
-                <div
-                  key={chapter.id}
-                  className="rounded-xl border border-gray-200 p-6"
-                >
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {chapter.title}
-                  </h3>
+              {chapters.map((chapter) => {
+                const totalLessons = chapter.lessons?.length ?? 0;
 
-                  {chapter.description && (
-                    <p className="mt-2 text-gray-600">
-                      {chapter.description}
-                    </p>
-                  )}
+                const completedLessons =
+                  chapter.lessons?.filter(
+                    (lesson) =>
+                      progressMap.get(lesson.id) === "COMPLETED"
+                  ).length ?? 0;
 
-                  {chapter.lessons?.length > 0 ? (
-                    <div className="mt-5 space-y-3">
-                      {chapter.lessons
-                        .sort(
-                          (a, b) =>
-                            a.display_order - b.display_order
-                        )
-                        .map((lesson) => (
-                          <Link
-                            key={lesson.id}
-                            href={`/materii/${subject.slug}/lectii/${lesson.slug}`}
-                            className="block rounded-lg bg-gray-50 px-4 py-3 transition hover:bg-gray-100"
-                          >
-                            <p className="font-medium text-gray-900">
-                              {lesson.title}
-                            </p>
+                const chapterProgress =
+                  totalLessons > 0
+                    ? Math.round(
+                        (completedLessons / totalLessons) * 100
+                      )
+                    : 0;
 
-                            {lesson.summary && (
-                              <p className="mt-1 text-sm text-gray-600">
-                                {lesson.summary}
-                              </p>
-                            )}
-                          </Link>
-                        ))}
+                return (
+                  <div
+                    key={chapter.id}
+                    className="rounded-xl border border-gray-200 p-6"
+                  >
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {chapter.title}
+                    </h3>
+
+                    {chapter.description && (
+                      <p className="mt-2 text-gray-600">
+                        {chapter.description}
+                      </p>
+                    )}
+
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">
+                          Progres capitol
+                        </span>
+
+                        <span className="font-medium text-gray-900">
+                          {completedLessons}/{totalLessons} lecții
+                          {" · "}
+                          {chapterProgress}%
+                        </span>
+                      </div>
+
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-gray-900"
+                          style={{
+                            width: `${chapterProgress}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                  ) : (
-                    <p className="mt-4 text-sm text-gray-500">
-                      Nu există încă lecții disponibile.
-                    </p>
-                  )}
-                </div>
-              ))}
+
+                    {chapter.lessons?.length > 0 ? (
+                      <div className="mt-5 space-y-3">
+                        {chapter.lessons
+                          .sort(
+                            (a, b) =>
+                              a.display_order - b.display_order
+                          )
+                          .map((lesson) => {
+                            const status =
+                              progressMap.get(lesson.id) ??
+                              "NOT_STARTED";
+
+                            return (
+                              <Link
+                                key={lesson.id}
+                                href={`/materii/${subject.slug}/lectii/${lesson.slug}`}
+                                className="block rounded-lg bg-gray-50 px-4 py-3 transition hover:bg-gray-100"
+                              >
+                                <div className="flex items-center justify-between gap-4">
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      {lesson.title}
+                                    </p>
+
+                                    {lesson.summary && (
+                                      <p className="mt-1 text-sm text-gray-600">
+                                        {lesson.summary}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <div className="shrink-0">
+                                    {status === "COMPLETED" && (
+                                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                                        Finalizată
+                                      </span>
+                                    )}
+
+                                    {status === "IN_PROGRESS" && (
+                                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                                        În progres
+                                      </span>
+                                    )}
+
+                                    {status === "NOT_STARTED" && (
+                                      <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-medium text-gray-600">
+                                        Neîncepută
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-gray-500">
+                        Nu există încă lecții disponibile.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

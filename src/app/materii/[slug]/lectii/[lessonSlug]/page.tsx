@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LessonBlockRenderer from "@/components/lesson/LessonBlockRenderer";
+import {
+  startLessonProgress,
+  completeLesson,
+} from "./actions";
 
 type LessonPageProps = {
   params: Promise<{
@@ -82,8 +86,19 @@ export default async function LessonPage({
   // console.log("LESSON:", lesson);
   // console.log("LESSON ERROR:", lessonError);
 
+  const { data: progress } = await supabase
+    .from("lesson_progress")
+    .select("status, started_at, completed_at")
+    .eq("user_id", user.id)
+    .eq("lesson_id", lesson!.id)
+    .maybeSingle();
+
   if (lessonError || !lesson) {
     notFound();
+  }
+
+  if (!isAdmin && !progress) {
+    await startLessonProgress(lesson.id);
   }
 
   const { data: blocks, error: blocksError } = await supabase
@@ -219,6 +234,38 @@ export default async function LessonPage({
           />
         ))}
       </div>
+
+      {!isAdmin && (
+        <div className="mt-12 border-t border-gray-200 pt-8">
+          {progress?.status === "COMPLETED" ? (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+              <p className="font-medium text-green-800">
+                Lecție finalizată
+              </p>
+
+              <p className="mt-1 text-sm text-green-700">
+                Ai finalizat această lecție.
+              </p>
+            </div>
+          ) : (
+            <form
+              action={completeLesson.bind(
+                null,
+                lesson.id,
+                subject.slug,
+                lesson.slug
+              )}
+            >
+              <button
+                type="submit"
+                className="rounded-lg bg-gray-900 px-5 py-3 font-medium text-white hover:bg-gray-700"
+              >
+                Finalizează lecția
+              </button>
+            </form>
+          )}
+        </div>
+      )}
     </main>
   );
 }
