@@ -236,6 +236,12 @@ export default async function SubjectUsersPage({
 
             <tbody className="divide-y divide-gray-200">
               {enrollments.map((enrollment) => {
+                const enrollmentProfile = Array.isArray(
+                  enrollment.profiles
+                )
+                  ? enrollment.profiles[0]
+                  : enrollment.profiles;
+
                 const userProgress =
                   progressByUser.get(enrollment.user_id);
 
@@ -253,8 +259,7 @@ export default async function SubjectUsersPage({
                 return (
                   <tr key={enrollment.id}>
                     <td className="px-4 py-4 text-gray-900">
-                      {enrollment.profiles?.full_name ||
-                        "Utilizator"}
+                      {enrollmentProfile?.full_name || "Utilizator"}
                     </td>
 
                     <td className="px-4 py-4">

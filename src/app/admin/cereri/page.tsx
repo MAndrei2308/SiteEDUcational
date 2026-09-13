@@ -66,18 +66,27 @@ export default async function AdminRequestsPage() {
 
       {!error && enrollments && enrollments.length > 0 && (
         <div className="mt-8 space-y-4">
-          {enrollments.map((enrollment) => (
-            <div
-              key={enrollment.id}
-              className="flex items-center justify-between rounded-xl border border-gray-200 p-6"
-            >
+          {enrollments.map((enrollment) => {
+            const userProfile = Array.isArray(enrollment.profiles)
+              ? enrollment.profiles[0]
+              : enrollment.profiles;
+
+            const subject = Array.isArray(enrollment.subjects)
+              ? enrollment.subjects[0]
+              : enrollment.subjects;
+
+            return (
+              <div
+                key={enrollment.id}
+                className="flex items-center justify-between rounded-xl border border-gray-200 p-6"
+              >
               <div>
                 <p className="font-semibold text-gray-900">
-                  {enrollment.profiles?.full_name || "Elev"}
+                  {userProfile?.full_name || "Elev"}
                 </p>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Materie: {enrollment.subjects?.name || "Necunoscută"}
+                  Materie: {subject?.name || "Necunoscută"}
                 </p>
 
                 <p className="mt-1 text-xs text-gray-400">
@@ -105,7 +114,8 @@ export default async function AdminRequestsPage() {
                 </form>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </main>

@@ -150,8 +150,12 @@ export default async function StudentProgressPage({
         ).updated_at
       : null;
 
+  const studentProfile = Array.isArray(enrollment.profiles)
+    ? enrollment.profiles[0]
+    : enrollment.profiles;
+
   const studentName =
-    enrollment.profiles?.full_name ??
+    studentProfile?.full_name ??
     "Utilizator";
 
   return (
