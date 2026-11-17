@@ -98,6 +98,8 @@ export default async function LessonPage({
       title,
       slug,
       summary,
+      lesson_number,
+      duration_hours,
       chapter_id,
       chapters!inner (
         id,
@@ -314,6 +316,21 @@ export default async function LessonPage({
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
             {lesson.title}
           </h1>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+            {lesson.lesson_number && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800">
+                Lecția {lesson.lesson_number}
+              </span>
+            )}
+
+            {lesson.duration_hours && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-800">
+                ⏱️ {lesson.duration_hours}{" "}
+                {lesson.duration_hours === 1 ? "oră" : "ore"}
+              </span>
+            )}
+          </div>
 
           {lesson.summary && (
             <p className="mt-4 text-base leading-7 text-gray-600 sm:text-lg sm:leading-8">

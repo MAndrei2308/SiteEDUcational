@@ -130,6 +130,51 @@ export default async function NewLessonPage({
           />
         </div>
 
+        <div>
+          <label
+            htmlFor="lesson_number"
+            className="mb-2 block font-medium text-gray-900 dark:text-gray-100"
+          >
+            Număr lecție
+          </label>
+
+          <input
+            id="lesson_number"
+            name="lesson_number"
+            type="number"
+            min="1"
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Numărul lecției din planificarea didactică.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="duration_hours"
+            className="mb-2 block font-medium text-gray-900 dark:text-gray-100"
+          >
+            Durată
+          </label>
+
+          <input
+            id="duration_hours"
+            name="duration_hours"
+            type="number"
+            min="1"
+            defaultValue={1}
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Numărul de ore alocate pentru parcurgerea lecției.
+          </p>
+        </div>
+
         <label className="flex items-center gap-3">
           <input
             name="isActive"

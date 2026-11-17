@@ -49,7 +49,7 @@ export default async function EditLessonPage({
   const { data: lesson, error: lessonError } = await supabase
     .from("lessons")
     .select(
-      "id, title, slug, summary, display_order, is_active, chapter_id"
+      "id, title, slug, summary, lesson_number, duration_hours, display_order, is_active, chapter_id"
     )
     .eq("id", lessonId)
     .eq("chapter_id", chapterId)
@@ -230,6 +230,52 @@ export default async function EditLessonPage({
             defaultValue={lesson.summary ?? ""}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="lesson_number"
+            className="mb-2 block font-medium text-gray-900 dark:text-gray-100"
+          >
+            Număr lecție
+          </label>
+
+          <input
+            id="lesson_number"
+            name="lesson_number"
+            type="number"
+            min="1"
+            defaultValue={lesson.lesson_number ?? ""}
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Numărul lecției din planificarea didactică.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="duration_hours"
+            className="mb-2 block font-medium text-gray-900 dark:text-gray-100"
+          >
+            Durată
+          </label>
+
+          <input
+            id="duration_hours"
+            name="duration_hours"
+            type="number"
+            min="1"
+            defaultValue={lesson.duration_hours ?? 1}
+            required
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Numărul de ore necesare pentru parcurgerea lecției.
+          </p>
         </div>
 
         <div>

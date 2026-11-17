@@ -33,6 +33,14 @@ export async function createLesson(
 
   const displayOrder = (lastLesson?.display_order ?? 0) + 1;
 
+  const lessonNumber = Number(
+    formData.get("lesson_number")
+  );
+
+  const durationHours = Number(
+    formData.get("duration_hours")
+  );
+
   const isActive = formData.get("isActive") === "on";
 
   if (!title || !slug) {
@@ -43,6 +51,24 @@ export async function createLesson(
     );
   }
 
+  if (
+    !Number.isInteger(lessonNumber) ||
+    lessonNumber < 1
+  ) {
+    throw new Error(
+      "Numărul lecției trebuie să fie un număr pozitiv."
+    );
+  }
+
+  if (
+    !Number.isInteger(durationHours) ||
+    durationHours < 1
+  ) {
+    throw new Error(
+      "Durata lecției trebuie să fie de minimum o oră."
+    );
+  }
+
   const { error } = await supabase
     .from("lessons")
     .insert({
@@ -50,6 +76,8 @@ export async function createLesson(
       title,
       slug,
       summary: summary || null,
+      lesson_number: lessonNumber,
+      duration_hours: durationHours,
       display_order: displayOrder,
       is_active: isActive,
     });
@@ -86,6 +114,14 @@ export async function updateLesson(
   const slug = String(formData.get("slug") ?? "").trim();
   const summary = String(formData.get("summary") ?? "").trim();
 
+  const lessonNumber = Number(
+    formData.get("lesson_number")
+  );
+
+  const durationHours = Number(
+    formData.get("duration_hours")
+  );
+
   const displayOrder = Number(
     formData.get("displayOrder") ?? 1
   );
@@ -100,12 +136,32 @@ export async function updateLesson(
     );
   }
 
+  if (
+    !Number.isInteger(lessonNumber) ||
+    lessonNumber < 1
+  ) {
+    throw new Error(
+      "Numărul lecției trebuie să fie un număr pozitiv."
+    );
+  }
+
+  if (
+    !Number.isInteger(durationHours) ||
+    durationHours < 1
+  ) {
+    throw new Error(
+      "Durata lecției trebuie să fie de minimum o oră."
+    );
+  }
+
   const { error } = await supabase
     .from("lessons")
     .update({
       title,
       slug,
       summary: summary || null,
+      lesson_number: lessonNumber,
+      duration_hours: durationHours,
       is_active: isActive,
       updated_at: new Date().toISOString(),
     })

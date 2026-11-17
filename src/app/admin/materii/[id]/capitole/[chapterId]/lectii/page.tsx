@@ -59,7 +59,7 @@ export default async function LessonsPage({
 
   const { data: lessons, error } = await supabase
     .from("lessons")
-    .select("id, title, slug, display_order, is_active")
+    .select("id, title, slug, lesson_number, duration_hours, display_order, is_active")
     .eq("chapter_id", chapterId)
     .order("display_order", { ascending: true });
 
@@ -114,6 +114,14 @@ export default async function LessonsPage({
                   Lecție
                 </th>
 
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Nr.
+                </th>
+
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  Durată
+                </th>
+
                 <th className="px-4 py-3 text-sm font-semibold text-gray-700">
                   Slug
                 </th>
@@ -137,6 +145,18 @@ export default async function LessonsPage({
                 <tr key={lesson.id}>
                   <td className="px-4 py-3 text-gray-900">
                     {lesson.title}
+                  </td>
+
+                  <td className="px-5 py-4 text-gray-700 dark:text-gray-300">
+                    {lesson.lesson_number ?? "—"}
+                  </td>
+
+                  <td className="px-5 py-4 text-gray-700 dark:text-gray-300">
+                    {lesson.duration_hours
+                      ? `${lesson.duration_hours} ${
+                          lesson.duration_hours === 1 ? "oră" : "ore"
+                        }`
+                      : "—"}
                   </td>
 
                   <td className="px-4 py-3 text-gray-600">
